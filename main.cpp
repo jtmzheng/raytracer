@@ -17,7 +17,20 @@ int main()
         glm::vec3(0, 1, 0),
         50);
 
-    rt.addSurface(shared_ptr<Surface>(new Sphere(glm::vec3(45, 45, -100), 25.0f)), "test");
+    rt.addSurface(shared_ptr<Surface>(
+        new Sphere(
+            glm::vec3(0.7, 1.0, 0.7),
+            glm::vec3(0.5, 0.7, 0.5),
+            25,
+            glm::vec3(45, 45, -100),
+            25.0f)),
+        "test"
+    );
+    rt.addLight(shared_ptr<Light>(
+        new Light(
+            glm::vec3(-100, 150, 400),
+            glm::vec3(0.7, 0.0, 0.7))),
+        "orange");
     rt.render();
     cout << "Hello World" << endl;
     return 0;

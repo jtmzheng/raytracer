@@ -34,3 +34,7 @@ bool Sphere::intersect(
     }
     return false;
 }
+
+glm::vec3 Sphere::getNorm(const glm::vec3 &pos) const {
+    return glm::normalize(pos - c);
+}

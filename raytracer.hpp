@@ -9,6 +9,7 @@
 #include <glm/ext.hpp>
 
 #include "image.hpp"
+#include "light.hpp"
 #include "surface.hpp"
 
 using namespace std;
@@ -41,7 +42,7 @@ public:
 
     void render();
     bool addSurface(shared_ptr<Surface> surf, string name);
-    bool addLight(string name);
+    bool addLight(shared_ptr<Light> l, string name);
 
 private:
     // Output image
@@ -58,8 +59,8 @@ private:
     float impW;
 
     // Light parameters
-    glm::vec3 ambient;
-    // TODO: Light class
+    vector<shared_ptr<Light>> lights;
+    map<string, int> lightNames;
 
     // Objects in world
     vector<shared_ptr<Surface>> surfs;

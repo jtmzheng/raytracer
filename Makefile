@@ -20,6 +20,7 @@ CFLAGS += $(INC_PATH)
 DEPS = raytracer.o \
 	image.o \
 	surface.o \
+	light.o \
 
 all: $(TARGET)
 
@@ -34,6 +35,9 @@ image.o: image.cpp
 
 surface.o: surface.cpp
 	$(CC) $(CFLAGS) -c surface.cpp -o surface.o
+
+light.o: light.cpp
+	$(CC) $(CFLAGS) -c light.cpp -o light.o
 
 clean:
 	rm -f *.o raytrace
