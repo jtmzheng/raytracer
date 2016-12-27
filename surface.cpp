@@ -4,7 +4,9 @@
 
 using namespace std;
 
-float det(float a, float b, float c) {
+#define EPS 1e-6f
+
+float discriminant(float a, float b, float c) {
     return b*b - 4*a*c;
 }
 
@@ -16,7 +18,7 @@ bool Sphere::intersect(
     auto a = glm::dot(dir, dir),
          b = glm::dot(2.0f*dir, eyeC),
          c = glm::dot(eyeC, eyeC) - rad*rad;
-    auto d = det(a, b, c);
+    auto d = discriminant(a, b, c);
 
     if (d < 0) {
         return false;
@@ -37,4 +39,42 @@ bool Sphere::intersect(
 
 glm::vec3 Sphere::getNorm(const glm::vec3 &pos) const {
     return glm::normalize(pos - c);
+}
+
+bool Triangle::intersect(
+    const glm::vec3 &eye,
+    const glm::vec3 &dir,
+    HitRecord &hr) const {
+    // NB: ea is not normalized on purpose!
+    auto ea = va - eye;
+
+    // NB: these variable names are for ease of matching eqn (Cramers) from source material
+    float a = ba.x, b = ba.y, c = ba.z,
+          d = ca.x, e = ca.y, f = ca.z,
+          g = dir.x, h = dir.y, i = dir.z;
+    float j = ea.x, k = ea.y, l = ea.z;
+
+    float M = a*(e*i-h*f) + b*(g*f-d*i) + c*(d*h-e*g);
+    if (abs(M) < EPS)
+        return false;
+
+    float t = -(f*(a*k-j*b) + e*(j*c-a*l) + d*(b*l-k*c)) / M;
+    if (t < 0)
+        return false;
+
+    float gamma = (i*(a*k-j*b) + h*(j*c-a*l) + g*(b*l-k*c)) / M;
+    if (gamma < 0 || gamma > 1)
+        return false;
+
+    float beta = (j*(e*i-h*f) + k*(g*f-d*i) + l*(d*h-e*g)) / M;
+    if (beta < 0 || beta > (1 - gamma))
+        return false;
+
+    hr.t = t;
+    return true;
+}
+
+glm::vec3 Triangle::getNorm(const glm::vec3 &pos) const {
+    // NB: Not sure which normal is correct
+    return glm::normalize(glm::cross(ca, ba));
 }

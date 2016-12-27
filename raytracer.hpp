@@ -45,6 +45,10 @@ public:
     bool addLight(shared_ptr<Light> l, string name);
 
 private:
+    // Shade a pixel using the HitRecord for the ray through that pixel
+    void shade(const HitRecord &hr, Image &img, uint i, uint j);
+
+private:
     // Output image
     Image img;
 

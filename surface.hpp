@@ -16,6 +16,7 @@ struct HitRecord {
 class Surface {
 public:
     Surface(glm::vec3 kd, glm::vec3 ks, float p) : kd(kd), ks(ks), p(p) { }
+    Surface() : kd(0.7, 0, 0), ks(0.7, 0.7, 0.7), p(10) { }
     virtual bool intersect(const glm::vec3 &eye, const glm::vec3 &dir, HitRecord &hr) const = 0;
 
     // Get the normal to the surface at a point p on the surface
@@ -38,5 +39,19 @@ public:
 private:
     glm::vec3 c;
     float rad;
+};
+
+class Triangle : public Surface {
+public:
+    Triangle(glm::vec3 a, glm::vec3 b, glm::vec3 c) :
+        Surface(), va(a), vb(b), vc(c), ba(a - b), ca(a - c) { }
+    bool intersect(const glm::vec3 &eye, const glm::vec3 &dir, HitRecord &hr) const;
+    glm::vec3 getNorm(const glm::vec3 &p) const;
+private:
+    // Positions of vertices for triangle
+    glm::vec3 va, vb, vc;
+
+    // Basis vectors for triangle (avoid recalculating)
+    glm::vec3 ba, ca;
 };
 #endif
