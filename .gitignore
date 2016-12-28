@@ -2,3 +2,4 @@
 raytrace
 *.out
 *.png
+*.pyc
