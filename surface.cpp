@@ -13,7 +13,8 @@ float discriminant(float a, float b, float c) {
 bool Sphere::intersect(
     const glm::vec3 &eye,
     const glm::vec3 &dir,
-    HitRecord &hr) const {
+    HitRecord &hr,
+    const std::pair<float, float> &rng) const {
     auto eyeC = eye - c;
     auto a = glm::dot(dir, dir),
          b = glm::dot(2.0f*dir, eyeC),
@@ -26,11 +27,11 @@ bool Sphere::intersect(
 
     float t1 = (-b - std::sqrt(d))/(2*a),
           t2 = (-b + std::sqrt(d))/(2*a);
-    if (t1 > 0) {
+    if (t1 > rng.first && t1 < rng.second) {
         hr.t = t1;
         return true;
     }
-    if (t2 > 0) {
+    if (t2 > rng.first && t2 < rng.second) {
         hr.t = t2;
         return true;
     }
@@ -44,7 +45,8 @@ glm::vec3 Sphere::getNorm(const glm::vec3 &pos) const {
 bool Triangle::intersect(
     const glm::vec3 &eye,
     const glm::vec3 &dir,
-    HitRecord &hr) const {
+    HitRecord &hr,
+    const std::pair<float, float> &rng) const {
     // NB: ea is not normalized on purpose!
     auto ea = va - eye;
 
@@ -59,15 +61,15 @@ bool Triangle::intersect(
         return false;
 
     float t = -(f*(a*k-j*b) + e*(j*c-a*l) + d*(b*l-k*c)) / M;
-    if (t < 0)
+    if (t < rng.first || t > rng.second)
         return false;
 
     float gamma = (i*(a*k-j*b) + h*(j*c-a*l) + g*(b*l-k*c)) / M;
-    if (gamma < 0 || gamma > 1)
+    if (isFinite() && (gamma < 0 || gamma > 1))
         return false;
 
     float beta = (j*(e*i-h*f) + k*(g*f-d*i) + l*(d*h-e*g)) / M;
-    if (beta < 0 || beta > (1 - gamma))
+    if (isFinite() && (beta < 0 || beta > (1 - gamma)))
         return false;
 
     hr.t = t;

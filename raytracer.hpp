@@ -45,6 +45,11 @@ public:
     bool addLight(shared_ptr<Light> l, string name);
 
 private:
+    bool intersect(
+        const glm::vec3 &eye,
+        const glm::vec3 &dir,
+        HitRecord &hr,
+        pair<float, float> rng = make_pair(0, numeric_limits<float>::max())) const;
     // Shade a pixel using the HitRecord for the ray through that pixel
     void shade(const HitRecord &hr, Image &img, uint i, uint j);
 

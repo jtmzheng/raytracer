@@ -4,6 +4,8 @@
 #include <iostream>
 #include <glm/ext.hpp>
 
+static const float EPS = 1e-3;
+
 void RayTracer::render() {
     // NB: 'c' is centre of image plane, 'l' is lower left hand corner
     auto c = eye - w*focalLength;
@@ -19,18 +21,10 @@ void RayTracer::render() {
 
             // Find surface with minimum intersection for ray
             HitRecord minHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
-            for (const auto &surf : surfs) {
-                HitRecord hr{std::numeric_limits<float>::max(), dir, eye, surf};
-                if (surf->intersect(eye, dir, hr)) {
-                    if (hr.t < minHr.t) {
-                        minHr = hr;
-                    }
-                }
-            }
-
-            // No intersection found
-            if (minHr.surf == nullptr)
+            if (!intersect(eye, dir, minHr)) {
+                // TODO: Add background
                 continue;
+            }
 
             shade(minHr, img, i, j);
         }
@@ -40,13 +34,38 @@ void RayTracer::render() {
     img.savePng("test.png");
 }
 
+bool RayTracer::intersect(
+    const glm::vec3 &eye,
+    const glm::vec3 &dir,
+    HitRecord &minHr,
+    std::pair<float, float> rng) const
+{
+    for (const auto &surf : surfs) {
+        HitRecord hr{std::numeric_limits<float>::max(), dir, eye, surf};
+        if (surf->intersect(eye, dir, hr, rng)) {
+            if (hr.t < minHr.t) {
+                minHr = hr;
+            }
+        }
+    }
+
+    return minHr.surf != nullptr;
+}
+
 void RayTracer::shade(const HitRecord &hr, Image &img, uint i, uint j) {
     auto int_pt = eye + hr.dir*hr.t;
     auto v = -hr.dir, norm = hr.surf->getNorm(int_pt);
     glm::vec3 col(0, 0, 0);
     for (const auto &light : lights) {
-        auto lightDir = glm::normalize(light->getPos() - int_pt);
+        auto lightDir = light->getPos() - int_pt;
+        auto lightDist = glm::length(lightDir);
+        lightDir = glm::normalize(lightDir);
         auto halfVec = glm::normalize(lightDir + v);
+        HitRecord shadHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
+        if (intersect(int_pt + EPS*lightDir, lightDir, shadHr, make_pair(0, lightDist))) {
+            // Don't shade if in shadow of another surface
+            continue;
+        }
 
         // Phong lighting
         auto kd = hr.surf->getKd(), ks = hr.surf->getKs();
