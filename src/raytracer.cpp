@@ -28,7 +28,7 @@ void RayTracer::render(Image &img) {
     }
 }
 
-glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir) const {
+glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int depth) const {
     // Find surface with minimum intersection for ray
     HitRecord minHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
     if (!intersect(eye, dir, minHr)) {
@@ -36,7 +36,7 @@ glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir) const 
         return glm::vec3();
     }
 
-    return shade(minHr);
+    return shade(minHr, depth);
 
 }
 
@@ -58,9 +58,12 @@ bool RayTracer::intersect(
     return minHr.surf != nullptr;
 }
 
-glm::vec3 RayTracer::shade(const HitRecord &hr) const {
+glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
     auto int_pt = eye + hr.dir*hr.t;
     auto v = -hr.dir, norm = hr.surf->getNorm(int_pt);
+    // Surface params
+    const auto &mat = hr.surf->getMaterial();
+
     glm::vec3 col(0, 0, 0);
     for (const auto &light : lights) {
         auto lightDir = light->getPos() - int_pt;
@@ -75,16 +78,24 @@ glm::vec3 RayTracer::shade(const HitRecord &hr) const {
             continue;
         }
 
-        // Phong lighting
-        auto kd = hr.surf->getKd(), ks = hr.surf->getKs();
-        auto p = hr.surf->getP();
         auto intensity = light->getIntensity();
         auto diffMag = max(0.0f, glm::dot(norm, lightDir));
-        auto specMag = glm::pow(glm::max(0.0f, glm::dot(norm, halfVec)), p);
+        float specMag = 0;
 
-        col.r += kd.r*intensity.r*diffMag + ks.r*intensity.r*specMag;
-        col.g += kd.g*intensity.g*diffMag + ks.g*intensity.g*specMag;
-        col.b += kd.b*intensity.b*diffMag + ks.b*intensity.b*specMag;
+        // Ignore Phong specular shading if mirrored surface
+        if (!mat.isMirror) {
+            specMag = glm::pow(glm::max(0.0f, glm::dot(norm, halfVec)), mat.p);
+        }
+
+        col.r += mat.kd.r*intensity.r*diffMag + mat.ks.r*intensity.r*specMag;
+        col.g += mat.kd.g*intensity.g*diffMag + mat.ks.g*intensity.g*specMag;
+        col.b += mat.kd.b*intensity.b*diffMag + mat.ks.b*intensity.b*specMag;
+    }
+
+    // Mirror reflections
+    if (mat.isMirror && depth < MAX_DEPTH) {
+        auto r = hr.dir - 2*(glm::dot(hr.dir, norm))*norm;
+        col += mat.ks * raycolor(int_pt + EPS*r, r, depth + 1);
     }
 
     return col;

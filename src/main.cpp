@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 
 #include "image.hpp"
+#include "material.hpp"
 #include "raytracer.hpp"
 #include "surface.hpp"
 
@@ -43,23 +44,34 @@ int main(int ac, char *av[])
         glm::vec3(0, 1, 0),
         50);
 
+    auto a = make_shared<Material>(
+        glm::vec3(0.7, 1.0, 0.7),
+        glm::vec3(0.9, 0.9, 0.9),
+        true,
+        25);
+
+    auto b = make_shared<Material>(
+        glm::vec3(0.7, 0.1, 0.3),
+        glm::vec3(0.9, 0.9, 0.9),
+        true,
+        25);
+
+    auto c = make_shared<Material>(
+        glm::vec3(0.7, 0.7, 0.7),
+        glm::vec3(0.9, 0.9, 0.9),
+        true,
+        100);
+
     rt.addSurface(shared_ptr<Surface>(
-        new Sphere(
-            glm::vec3(0.7, 1.0, 0.7),
-            glm::vec3(0.5, 0.7, 0.5),
-            25,
-            glm::vec3(0, 30, -50),
-            25.0f)),
+        new Sphere(glm::vec3(0, 30, -50), 25.0f, a)),
         "test"
     );
 
     rt.addSurface(shared_ptr<Surface>(
         new Sphere(
-            glm::vec3(0.7, 0.1, 0.3),
-            glm::vec3(0.5, 0.1, 0.3),
-            25,
             glm::vec3(0, -25, -50),
-            25.0f)),
+            25.0f,
+            b)),
         "test2"
     );
 
@@ -67,7 +79,8 @@ int main(int ac, char *av[])
         new Plane(
             glm::vec3(-25, 0, 0),
             glm::vec3(-25, 5, 0),
-            glm::vec3(-25, -5, -5))),
+            glm::vec3(-25, -5, -5),
+            c)),
         "test3"
     );
 

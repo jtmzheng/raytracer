@@ -23,6 +23,7 @@ DEPS = raytracer.o \
 	image.o \
 	surface.o \
 	light.o \
+	material.o \
 
 all: $(TARGET)
 
@@ -40,6 +41,9 @@ surface.o: surface.cpp
 
 light.o: light.cpp
 	$(CC) $(CFLAGS) -c light.cpp -o light.o
+
+material.o: material.cpp
+	$(CC) $(CFLAGS) -c material.cpp -o material.o
 
 clean:
 	rm -f *.o raytrace

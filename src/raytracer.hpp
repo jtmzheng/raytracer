@@ -14,7 +14,8 @@
 
 using namespace std;
 
-const float ASPECT_RATIO = 1.0f;
+const static float ASPECT_RATIO = 1.0f;
+const static float MAX_DEPTH = 10;
 
 class RayTracer {
 public:
@@ -49,8 +50,8 @@ private:
         pair<float, float> rng = make_pair(0, numeric_limits<float>::max())) const;
 
     // Shade a pixel using the HitRecord for the ray through that pixel
-    glm::vec3 shade(const HitRecord &hr) const;
-    glm::vec3 raycolor(const glm::vec3 &eye, const glm::vec3 &dir) const;
+    glm::vec3 shade(const HitRecord &hr, int depth = 0) const;
+    glm::vec3 raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int depth = 0) const;
 
 private:
     // View parameters
