@@ -46,18 +46,18 @@ int main(int ac, char *av[])
 
     auto a = make_shared<Material>(
         glm::vec3(0.7, 1.0, 0.7),
-        glm::vec3(0.9, 0.9, 0.9),
+        glm::vec3(0.3, 0.3, 0.3),
         true,
-        25);
+        10);
 
     auto b = make_shared<Material>(
         glm::vec3(0.7, 0.1, 0.3),
-        glm::vec3(0.9, 0.9, 0.9),
+        glm::vec3(0.3, 0.3, 0.3),
         true,
-        25);
+        10);
 
     auto c = make_shared<Material>(
-        glm::vec3(0.7, 0.7, 0.7),
+        glm::vec3(0.9, 0.9, 0.9),
         glm::vec3(0.9, 0.9, 0.9),
         true,
         100);

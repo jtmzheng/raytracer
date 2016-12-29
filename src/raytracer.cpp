@@ -3,24 +3,39 @@
 
 #include <iostream>
 #include <glm/ext.hpp>
+#include <random>
 
 static const float EPS = 1e-3;
+static const float SUBSAMPLES = 4;
+static const float SUBSAMPLE_DIV = 1.0f / SUBSAMPLES;
 
 void RayTracer::render(Image &img) {
     // NB: 'c' is centre of image plane, 'l' is lower left hand corner
     auto c = eye - w*focalLength;
     auto l = c - u*impW/2.0f - v*impH/2.0f;
 
+    // NB: See http://stackoverflow.com/questions/686353/c-random-float-number-generation
+    ::random_device rd;
+    ::mt19937 e2(rd());
+    ::uniform_real_distribution<float> dist(0, SUBSAMPLE_DIV);
+
     for (uint i = 0; i < img.width(); ++i) {
         for (uint j = 0; j < img.height(); ++j) {
-            // Pixel location on image plane
-            auto us = (i + 0.5f)*impW/float(img.width());
-            auto vs = (j + 0.5f)*impH/float(img.height());
-            auto s = l + u*us + v*vs;
-            auto dir = glm::normalize(s - eye);
+            // Stratified supersampling
+            glm::vec3 col(0, 0, 0);
+            for (float p = 0; p < SUBSAMPLES; ++p) {
+                for (float q = 0; q < SUBSAMPLES; ++q) {
+                    // Pixel location on image plane
+                    auto us = (i + (p + dist(e2)/SUBSAMPLES))*impW/float(img.width());
+                    auto vs = (j + (q + dist(e2)/SUBSAMPLES))*impH/float(img.height());
+                    auto s = l + u*us + v*vs;
+                    auto dir = glm::normalize(s - eye);
 
-            // Compute the color for the ray
-            auto col = raycolor(eye, dir);
+                    // Compute the color for the ray
+                    col += raycolor(eye, dir);
+                }
+            }
+            col /= float(SUBSAMPLES*SUBSAMPLES);
             img(i, j, 0) = col.r;
             img(i, j, 1) = col.g;
             img(i, j, 2) = col.b;
@@ -94,7 +109,8 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
 
     // Mirror reflections
     if (mat.isMirror && depth < MAX_DEPTH) {
-        auto r = hr.dir - 2*(glm::dot(hr.dir, norm))*norm;
+        // NB: ks should probably be km here
+        auto r = glm::normalize(hr.dir - 2*(glm::dot(hr.dir, norm))*norm);
         col += mat.ks * raycolor(int_pt + EPS*r, r, depth + 1);
     }
 
