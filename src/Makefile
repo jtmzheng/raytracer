@@ -1,6 +1,5 @@
 CC = g++
 CFLAGS = -Wall -std=c++11 -g
-LINKS = -pthread
 TARGET = main
 
 INC_PATH = -I ../shared/ \
@@ -12,10 +11,11 @@ INC_PATH = -I ../shared/ \
 LIB_PATH = -L ../lib/ \
 
 LDLIBS = -llodepng \
-	-lpthread \
+	-pthread \
 	-lglfw3 \
 	-lGL \
 	-lboost_program_options \
+	-lpthread \
 
 CFLAGS += $(INC_PATH)
 
@@ -28,7 +28,7 @@ DEPS = raytracer.o \
 all: $(TARGET)
 
 $(TARGET): clean $(DEPS) $(TARGET).cpp
-	$(CC) $(CFLAGS) $(LIB_PATH) $(DEPS) $(TARGET).cpp -o raytrace $(LDLIBS)
+	$(CC) $(CFLAGS) $(LIB_PATH) $(DEPS) $(TARGET).cpp -o raytrace $(LDLIBS) -Wl,--no-as-needed
 
 raytracer.o: raytracer.cpp
 	$(CC) $(CFLAGS) -c raytracer.cpp -o raytracer.o

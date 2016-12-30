@@ -2,6 +2,8 @@
 #include <iostream>
 #include <memory>
 #include <boost/program_options.hpp>
+#include <chrono>
+#include <thread>
 
 #include "image.hpp"
 #include "material.hpp"
@@ -15,10 +17,12 @@ int main(int ac, char *av[])
 {
     // Parse options using boost::program_options
     string file_name = "./img/test.png";
+    uint num_threads = thread::hardware_concurrency();
     try {
         po::options_description desc("Allowed options");
         desc.add_options()
             ("file,f", po::value<string>(&file_name), "file name")
+            ("threads,t", po::value<uint>(&num_threads), "number of threads")
         ;
 
         po::variables_map vm;
@@ -31,6 +35,8 @@ int main(int ac, char *av[])
         } else {
             cout << "Outputing image to ./img/test.png" << endl;
         }
+
+        cout << "Using " << num_threads << " threads" << endl;
     } catch(exception& e) {
         cerr << "error: " << e.what() << endl;
         return 1;
@@ -39,7 +45,8 @@ int main(int ac, char *av[])
     }
 
     Image img(1024, 1024);
-    RayTracer rt(glm::vec3(0, 20, 100),
+    RayTracer rt(num_threads,
+        glm::vec3(0, 20, 100),
         glm::vec3(0, 0, 0),
         glm::vec3(0, 1, 0),
         50);
@@ -98,7 +105,12 @@ int main(int ac, char *av[])
             10.0f)),
         "white2");
 
+    // Timing code
+    auto begin = chrono::high_resolution_clock::now();
     rt.render(img);
+    auto end = chrono::high_resolution_clock::now();
+
+    cout << "Time elapsed: " << chrono::duration_cast<std::chrono::seconds>(end-begin).count() << " s" << endl;
     img.savePng(file_name);
     cout << "Saved image to " << file_name  << endl;
     return 0;

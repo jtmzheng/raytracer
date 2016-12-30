@@ -19,10 +19,12 @@ const static float MAX_DEPTH = 10;
 
 class RayTracer {
 public:
-    RayTracer(glm::vec3 eye,
+    RayTracer(uint numThreads,
+        glm::vec3 eye,
         glm::vec3 lookAt,
         glm::vec3 up,
         float fovy) :
+            numThreads(numThreads),
             eye(eye),
             lookAt(lookAt),
             u(glm::normalize(up)),
@@ -49,11 +51,17 @@ private:
         HitRecord &hr,
         pair<float, float> rng = make_pair(0, numeric_limits<float>::max())) const;
 
+    // Worker job to return color per pixel
+    void traceRows(const glm::vec3 &l, Image &img, uint chunk, uint chunkSize) const;
+    void tracePixel(const glm::vec3 &l, Image &img, uint i, uint j) const;
+
     // Shade a pixel using the HitRecord for the ray through that pixel
     glm::vec3 shade(const HitRecord &hr, int depth = 0) const;
     glm::vec3 raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int depth = 0) const;
 
 private:
+    uint numThreads;
+
     // View parameters
     glm::vec3 eye;
     glm::vec3 lookAt;

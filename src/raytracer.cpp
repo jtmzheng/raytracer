@@ -5,6 +5,10 @@
 #include <glm/ext.hpp>
 #include <random>
 
+#include <thread>
+#include <mutex>
+#include <algorithm>
+
 static const float EPS = 1e-3;
 static const float SUBSAMPLES = 4;
 static const float SUBSAMPLE_DIV = 1.0f / SUBSAMPLES;
@@ -14,35 +18,53 @@ void RayTracer::render(Image &img) {
     // NB: 'c' is centre of image plane, 'l' is lower left hand corner
     auto c = eye - w*focalLength;
     auto l = c - u*impW/2.0f - v*impH/2.0f;
+    auto chunkSize = (img.height() / numThreads) + (img.height() % numThreads != 0);
 
-    // NB: See http://stackoverflow.com/questions/686353/c-random-float-number-generation
-    ::random_device rd;
-    ::mt19937 e2(rd());
-    ::uniform_real_distribution<float> dist(0, SUBSAMPLE_DIV);
+    vector<thread> workers(numThreads);
+    for (uint i = 0; i < numThreads; ++i) {
+        // NB: We can bind a reference to thread since thread lifetime < lifetime of this function
+        workers[i] = thread(&RayTracer::traceRows, this, ref(l), ref(img), i, chunkSize);
+    }
 
-    for (uint i = 0; i < img.width(); ++i) {
-        for (uint j = 0; j < img.height(); ++j) {
-            cout << i << ", " << j << endl;
-            // Stratified supersampling
-            glm::vec3 col(0, 0, 0);
-            for (float p = 0; p < SUBSAMPLES; ++p) {
-                for (float q = 0; q < SUBSAMPLES; ++q) {
-                    // Pixel location on image plane
-                    auto us = (i + (p + dist(e2)/SUBSAMPLES))*impW/float(img.width());
-                    auto vs = (j + (q + dist(e2)/SUBSAMPLES))*impH/float(img.height());
-                    auto s = l + u*us + v*vs;
-                    auto dir = glm::normalize(s - eye);
+    std::for_each(workers.begin(), workers.end(), [](thread& x){ x.join(); });
+}
 
-                    // Compute the color for the ray
-                    col += raycolor(eye, dir);
-                }
-            }
-            col /= float(SUBSAMPLES*SUBSAMPLES);
-            img(i, j, 0) = col.r;
-            img(i, j, 1) = col.g;
-            img(i, j, 2) = col.b;
+void RayTracer::traceRows(const glm::vec3 &l, Image &img, uint chunk, uint chunkSize) const {
+    // TODO: Logging should be lock guarded
+    cout << "Start chunk " << chunk << endl;
+    for (uint j = chunk*chunkSize; j < min((chunk+1)*chunkSize, img.height()); ++j) {
+        for (uint i = 0; i < img.width(); ++i) {
+            tracePixel(l, img, i, j);
         }
     }
+    cout << "Done chunk " << chunk << endl;
+}
+
+void RayTracer::tracePixel(const glm::vec3 &l, Image &img, uint i, uint j) const {
+    // NB: See http://stackoverflow.com/questions/686353/c-random-float-number-generation
+    thread_local random_device rd;
+    thread_local mt19937 e2(rd());
+    thread_local uniform_real_distribution<float> dist(0, SUBSAMPLE_DIV);
+
+    // Stratified supersampling
+    glm::vec3 col(0, 0, 0);
+    for (float p = 0; p < SUBSAMPLES; ++p) {
+        for (float q = 0; q < SUBSAMPLES; ++q) {
+            // Pixel location on image plane
+            auto us = (i + (p + dist(e2)/SUBSAMPLES))*impW/float(img.width());
+            auto vs = (j + (q + dist(e2)/SUBSAMPLES))*impH/float(img.height());
+            auto s = l + u*us + v*vs;
+            auto dir = glm::normalize(s - eye);
+
+            // Compute the color for the ray
+            col += raycolor(eye, dir);
+        }
+    }
+
+    col /= float(SUBSAMPLES*SUBSAMPLES);
+    img(i, j, 0) = col.r;
+    img(i, j, 1) = col.g;
+    img(i, j, 2) = col.b;
 }
 
 glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int depth) const {
@@ -82,9 +104,9 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
     const auto &mat = hr.surf->getMaterial();
 
     // Local random device since rng is not threadsafe
-    ::random_device rd;
-    ::mt19937 e2(rd());
-    ::uniform_real_distribution<float> dist(0, 1);
+    thread_local random_device rd;
+    thread_local mt19937 e2(rd());
+    thread_local uniform_real_distribution<float> dist(0, 1);
 
     glm::vec3 col(0, 0, 0);
     for (const auto &light : lights) {
@@ -102,6 +124,7 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
                 continue;
             }
 
+            // TODO: Attenuate light based on distance
             auto intensity = light->intensity;
             auto diffMag = max(0.0f, glm::dot(norm, lightDir));
             float specMag = 0;

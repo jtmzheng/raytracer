@@ -3,3 +3,4 @@ raytrace
 *.out
 *.png
 *.pyc
+*.swp
