@@ -5,14 +5,16 @@
 
 class Light {
 public:
-    Light(glm::vec3 pos, glm::vec3 intensity) :
-        intensity(intensity), pos(pos) { }
+    Light(glm::vec3 pos, glm::vec3 intensity, float rad) :
+        intensity(intensity), pos(pos), rad(rad) { }
 
-    glm::vec3 getIntensity() const { return intensity; }
-    glm::vec3 getPos() const { return pos; }
-private:
-    glm::vec3 intensity;
-    glm::vec3 pos;
+    // Returns a point in the spherical light
+    // TODO: Sample uniformly using spherical coordinates (this is pseudo-uniform)
+    glm::vec3 sample(float r1, float r2, float r3) const;
+public:
+    const glm::vec3 intensity;
+    const glm::vec3 pos;
+    const float rad;
 };
 
 #endif

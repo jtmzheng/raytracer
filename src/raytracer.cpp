@@ -8,6 +8,7 @@
 static const float EPS = 1e-3;
 static const float SUBSAMPLES = 4;
 static const float SUBSAMPLE_DIV = 1.0f / SUBSAMPLES;
+static const float SHADOWSAMPLES = 16;
 
 void RayTracer::render(Image &img) {
     // NB: 'c' is centre of image plane, 'l' is lower left hand corner
@@ -21,6 +22,7 @@ void RayTracer::render(Image &img) {
 
     for (uint i = 0; i < img.width(); ++i) {
         for (uint j = 0; j < img.height(); ++j) {
+            cout << i << ", " << j << endl;
             // Stratified supersampling
             glm::vec3 col(0, 0, 0);
             for (float p = 0; p < SUBSAMPLES; ++p) {
@@ -47,7 +49,7 @@ glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int de
     // Find surface with minimum intersection for ray
     HitRecord minHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
     if (!intersect(eye, dir, minHr)) {
-        // TODO: Add background
+        // TODO: Add background if no intersection found
         return glm::vec3();
     }
 
@@ -79,32 +81,43 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
     // Surface params
     const auto &mat = hr.surf->getMaterial();
 
+    // Local random device since rng is not threadsafe
+    ::random_device rd;
+    ::mt19937 e2(rd());
+    ::uniform_real_distribution<float> dist(0, 1);
+
     glm::vec3 col(0, 0, 0);
     for (const auto &light : lights) {
-        auto lightDir = light->getPos() - int_pt;
-        auto lightDist = glm::length(lightDir);
-        lightDir = glm::normalize(lightDir);
-        auto halfVec = glm::normalize(lightDir + v);
+        glm::vec3 lightCol(0, 0, 0);
+        for (uint i = 0; i < SHADOWSAMPLES; ++i) {
+            auto lightDir = light->sample(dist(e2), dist(e2), dist(e2)) - int_pt;
+            auto lightDist = glm::length(lightDir);
+            lightDir = glm::normalize(lightDir);
+            auto halfVec = glm::normalize(lightDir + v);
 
-        // Check if in shadow
-        HitRecord shadHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
-        if (intersect(int_pt + EPS*lightDir, lightDir, shadHr, make_pair(0, lightDist))) {
-            // Don't shade if in shadow of another surface
-            continue;
+            // Check if in shadow by sending shadow ray to light source
+            HitRecord shadHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
+            if (intersect(int_pt + EPS*lightDir, lightDir, shadHr, make_pair(0, lightDist))) {
+                // Don't shade if in shadow of another surface
+                continue;
+            }
+
+            auto intensity = light->intensity;
+            auto diffMag = max(0.0f, glm::dot(norm, lightDir));
+            float specMag = 0;
+
+            // Ignore Phong specular shading if mirrored surface
+            if (!mat.isMirror) {
+                specMag = glm::pow(glm::max(0.0f, glm::dot(norm, halfVec)), mat.p);
+            }
+
+            lightCol.r += mat.kd.r*intensity.r*diffMag + mat.ks.r*intensity.r*specMag;
+            lightCol.g += mat.kd.g*intensity.g*diffMag + mat.ks.g*intensity.g*specMag;
+            lightCol.b += mat.kd.b*intensity.b*diffMag + mat.ks.b*intensity.b*specMag;
         }
 
-        auto intensity = light->getIntensity();
-        auto diffMag = max(0.0f, glm::dot(norm, lightDir));
-        float specMag = 0;
-
-        // Ignore Phong specular shading if mirrored surface
-        if (!mat.isMirror) {
-            specMag = glm::pow(glm::max(0.0f, glm::dot(norm, halfVec)), mat.p);
-        }
-
-        col.r += mat.kd.r*intensity.r*diffMag + mat.ks.r*intensity.r*specMag;
-        col.g += mat.kd.g*intensity.g*diffMag + mat.ks.g*intensity.g*specMag;
-        col.b += mat.kd.b*intensity.b*diffMag + mat.ks.b*intensity.b*specMag;
+        lightCol /= SHADOWSAMPLES;
+        col += lightCol;
     }
 
     // Mirror reflections

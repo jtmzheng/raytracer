@@ -87,13 +87,15 @@ int main(int ac, char *av[])
     rt.addLight(shared_ptr<Light>(
         new Light(
             glm::vec3(25, 150, 0),
-            glm::vec3(0.7, 0.7, 0.7))),
+            glm::vec3(0.7, 0.7, 0.7),
+            10.0f)),
         "white");
 
     rt.addLight(shared_ptr<Light>(
         new Light(
             glm::vec3(0, 20, 50),
-            glm::vec3(0.7, 0.7, 0.7))),
+            glm::vec3(0.7, 0.7, 0.7),
+            10.0f)),
         "white2");
 
     rt.render(img);
