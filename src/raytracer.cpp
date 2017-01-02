@@ -85,9 +85,9 @@ bool RayTracer::intersect(
     HitRecord &minHr,
     std::pair<float, float> rng) const
 {
-    for (const auto &surf : surfs) {
-        HitRecord hr{std::numeric_limits<float>::max(), dir, eye, surf};
-        if (surf->intersect(eye, dir, hr, rng)) {
+    for (const auto &obj: objs) {
+        HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr};
+        if (obj->intersect(eye, dir, hr, rng)) {
             if (hr.t < minHr.t) {
                 minHr = hr;
             }
@@ -130,10 +130,7 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
             float specMag = 0;
 
             // Ignore Phong specular shading if mirrored surface
-            if (!mat.isMirror) {
-                specMag = glm::pow(glm::max(0.0f, glm::dot(norm, halfVec)), mat.p);
-            }
-
+            specMag = glm::pow(glm::max(0.0f, glm::dot(norm, halfVec)), mat.p);
             lightCol.r += mat.kd.r*intensity.r*diffMag + mat.ks.r*intensity.r*specMag;
             lightCol.g += mat.kd.g*intensity.g*diffMag + mat.ks.g*intensity.g*specMag;
             lightCol.b += mat.kd.b*intensity.b*diffMag + mat.ks.b*intensity.b*specMag;
@@ -147,16 +144,16 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
     if (mat.isMirror && depth < MAX_DEPTH) {
         // NB: ks should probably be km here
         auto r = glm::normalize(hr.dir - 2*(glm::dot(hr.dir, norm))*norm);
-        col += mat.ks * raycolor(int_pt + EPS*r, r, depth + 1);
+        col += mat.km * raycolor(int_pt + EPS*r, r, depth + 1);
     }
 
     return col;
 }
 
-bool RayTracer::addSurface(shared_ptr<Surface> surf, string name) {
-    if (!surfNames.count(name)) {
-        surfNames[name] = surfs.size();
-        surfs.emplace_back(surf);
+bool RayTracer::addObject(shared_ptr<Object> obj, string name) {
+    if (!objNames.count(name)) {
+        objNames[name] = objs.size();
+        objs.emplace_back(obj);
         return true;
     }
 

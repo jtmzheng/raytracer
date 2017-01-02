@@ -24,6 +24,9 @@ DEPS = raytracer.o \
 	surface.o \
 	light.o \
 	material.o \
+	triangle.o \
+	objobject.o \
+	transform.o \
 
 all: $(TARGET)
 
@@ -44,6 +47,15 @@ light.o: light.cpp
 
 material.o: material.cpp
 	$(CC) $(CFLAGS) -c material.cpp -o material.o
+
+objobject.o: objobject.cpp
+	$(CC) $(CFLAGS) -c objobject.cpp -o objobject.o
+
+triangle.o: triangle.cpp
+	$(CC) $(CFLAGS) -c triangle.cpp -o triangle.o
+
+transform.o: transform.cpp
+	$(CC) $(CFLAGS) -c transform.cpp -o transform.o
 
 clean:
 	rm -f *.o raytrace

@@ -15,7 +15,7 @@
 using namespace std;
 
 const static float ASPECT_RATIO = 1.0f;
-const static float MAX_DEPTH = 10;
+const static float MAX_DEPTH = 1;
 
 class RayTracer {
 public:
@@ -41,7 +41,7 @@ public:
     }
 
     void render(Image &img);
-    bool addSurface(shared_ptr<Surface> surf, string name);
+    bool addObject(shared_ptr<Object> obj, string name);
     bool addLight(shared_ptr<Light> l, string name);
 
 private:
@@ -77,7 +77,7 @@ private:
     map<string, int> lightNames;
 
     // Objects in world
-    vector<shared_ptr<Surface>> surfs;
-    map<string, int> surfNames;
+    vector<shared_ptr<Object>> objs;
+    map<string, int> objNames;
 };
 #endif

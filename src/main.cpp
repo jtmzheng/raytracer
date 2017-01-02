@@ -9,6 +9,10 @@
 #include "material.hpp"
 #include "raytracer.hpp"
 #include "surface.hpp"
+#include "objobject.hpp"
+#include "transform.hpp"
+
+#include "tiny_obj_loader.h"
 
 using namespace std;
 namespace po = boost::program_options;
@@ -44,7 +48,7 @@ int main(int ac, char *av[])
         cerr << "Exception of unknown type!" << endl;
     }
 
-    Image img(1024, 1024);
+    Image img(256, 256);
     RayTracer rt(num_threads,
         glm::vec3(0, 20, 100),
         glm::vec3(0, 0, 0),
@@ -69,12 +73,12 @@ int main(int ac, char *av[])
         true,
         100);
 
-    rt.addSurface(shared_ptr<Surface>(
+    rt.addObject(shared_ptr<Surface>(
         new Sphere(glm::vec3(0, 30, -50), 25.0f, a)),
         "test"
     );
 
-    rt.addSurface(shared_ptr<Surface>(
+    rt.addObject(shared_ptr<Surface>(
         new Sphere(
             glm::vec3(0, -25, -50),
             25.0f,
@@ -82,13 +86,24 @@ int main(int ac, char *av[])
         "test2"
     );
 
-    rt.addSurface(shared_ptr<Surface>(
-        new Plane(
-            glm::vec3(-25, 0, 0),
-            glm::vec3(-25, 5, 0),
-            glm::vec3(-25, -5, -5),
-            c)),
-        "test3"
+    auto rot = TransformMatrix::rot(glm::vec3(0, 0, 1), 90.0f);
+    auto scale = TransformMatrix::scale(glm::vec3(25, 25, 25));
+    auto transform = TransformChain({rot, scale});
+    auto objs = ObjObject::loadFromFile("../obj/teapot.obj", "../obj/", transform);
+    int i = 0;
+    for (const auto &obj : objs) {
+        if(!rt.addObject(obj, to_string(i++))) {
+            cout << "error" << endl;
+        }
+        cout << "adding object" << endl;
+    }
+
+    rt.addObject(Plane::create(
+        glm::vec3(-25, 0, 0),
+        glm::vec3(-25, 5, 0),
+        glm::vec3(-25, -5, -5),
+        c),
+        "plane"
     );
 
     rt.addLight(shared_ptr<Light>(
