@@ -47,25 +47,13 @@ vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, 
                 auto idx = shapes[s].mesh.indices[3*i + k];
                 auto vidx = idx.vertex_index;
                 auto nidx = idx.normal_index;
+                auto pos = xform.pos(glm::vec3(
+                    attrib.vertices[3*vidx],
+                    attrib.vertices[3*vidx+1],
+                    attrib.vertices[3*vidx+2]
+                ));
                 verts.emplace_back(
-                /*
-                    glm::vec3(
-                        attrib.vertices[3*vidx],
-                        attrib.vertices[3*vidx+1],
-                        attrib.vertices[3*vidx+2]
-                    ),
-                    glm::normalize((glm::vec3(
-                        attrib.normals[3*nidx],
-                        attrib.normals[3*nidx+1],
-                        attrib.normals[3*nidx+2]
-                    ))),
-                */
-
-                    xform.pos(glm::vec3(
-                        attrib.vertices[3*vidx],
-                        attrib.vertices[3*vidx+1],
-                        attrib.vertices[3*vidx+2]
-                    )),
+                    pos,
                     glm::normalize(xform.norm(glm::vec3(
                         attrib.normals[3*nidx],
                         attrib.normals[3*nidx+1],
@@ -73,6 +61,9 @@ vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, 
                     ))),
                     glm::vec2()
                 );
+
+                // Update the AABB
+                obj->box.update(pos);
             }
             obj->triangles.emplace_back(make_shared<Triangle>(verts[0], verts[1], verts[2], mats[mid]));
         }
@@ -82,12 +73,34 @@ vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, 
     return objs;
 }
 
+// Slab intersection (TODO: Factor out of here)
+static inline pair<float, float> calcT(float xe, float xd, const pair<float, float> &rng) {
+    float a = 1.0f/xd;
+    auto pr = make_pair(0.0f, 0.0f);
+    if (a >= 0) {
+        pr.first = a*(rng.first - xe);
+        pr.second = a*(rng.second - xe);
+    } else {
+        pr.second = a*(rng.first - xe);
+        pr.first = a*(rng.second - xe);
+    }
+    return pr;
+}
+
 bool ObjObject::intersect(
     const glm::vec3 &eye,
     const glm::vec3 &dir,
     HitRecord &minHr,
     const std::pair<float, float> &rng) const
 {
+    /*TODO: Refactor out this bounding box computation */
+    auto tx = calcT(eye.x, dir.x, box.x);
+    auto ty = calcT(eye.y, dir.y, box.y);
+    auto tz = calcT(eye.z, dir.z, box.z);
+    if (tx.first > ty.second || tx.first > tz.second) return false;
+    if (ty.first > tx.second || ty.first > tz.second) return false;
+    if (tz.first > ty.second || tz.first > tx.second) return false;
+
     for (const auto &triangle : triangles) {
         HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr};
         if (triangle->intersect(eye, dir, hr, rng)) {

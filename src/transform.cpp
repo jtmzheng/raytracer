@@ -3,7 +3,7 @@
 #include <iostream>
 #include <glm/ext.hpp>
 
-TransformMatrix TransformMatrix::rot(const glm::vec3 &axis, float deg) {
+TransformPtr TransformMatrix::rot(const glm::vec3 &axis, float deg) {
     // From araghavan3 (See GitHub)
     glm::mat3 mat;
     float ct = static_cast<float>(cos(M_PI * deg / 180.0));
@@ -31,15 +31,15 @@ TransformMatrix TransformMatrix::rot(const glm::vec3 &axis, float deg) {
     mat[2][0] = txz + sy;
     mat[2][1] = tyz - sx;
     mat[2][2] = tz * axis.z + ct;
-    return TransformMatrix(mat);
+    return std::make_shared<TransformMatrix>(mat);
 }
 
-TransformMatrix TransformMatrix::scale(const glm::vec3 &scale) {
+TransformPtr TransformMatrix::scale(const glm::vec3 &scale) {
     glm::mat3 mat;
     mat[0][0] *= scale.x;
     mat[1][1] *= scale.y;
     mat[2][2] *= scale.z;
-    return TransformMatrix(mat);
+    return std::make_shared<TransformMatrix>(mat);
 }
 
 
@@ -54,7 +54,7 @@ glm::vec3 TransformMatrix::norm(const glm::vec3 &norm) const {
 glm::vec3 TransformChain::pos(const glm::vec3 &pos) const {
     auto curr = pos;
     for (const auto &t : xforms) {
-        curr = t.pos(curr);
+        curr = t->pos(curr);
     }
     return curr;
 }
@@ -62,7 +62,7 @@ glm::vec3 TransformChain::pos(const glm::vec3 &pos) const {
 glm::vec3 TransformChain::norm(const glm::vec3 &norm) const {
     auto curr = norm;
     for (const auto &t : xforms) {
-        curr = t.norm(curr);
+        curr = t->norm(curr);
     }
     return curr;
 }

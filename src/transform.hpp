@@ -3,8 +3,10 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <memory>
 
 using std::vector;
+
 
 // TODO: pos/norm should be pure virtual, but initializer_list cannot construct instances of Transform
 class Transform {
@@ -16,14 +18,17 @@ public:
 };
 
 
+typedef std::shared_ptr<Transform> TransformPtr;
+
+
 class TransformChain : public Transform {
 public:
-    TransformChain(std::initializer_list<Transform> xforms) : Transform(), xforms(xforms) { }
+    TransformChain(std::initializer_list<TransformPtr> xforms) : Transform(), xforms(xforms) { }
     virtual ~TransformChain() { }
     glm::vec3 pos(const glm::vec3 &pos) const;
     glm::vec3 norm(const glm::vec3 &norm) const;
 private:
-    vector<Transform> xforms;
+    vector<TransformPtr> xforms;
 };
 
 
@@ -34,8 +39,8 @@ public:
     glm::vec3 pos(const glm::vec3 &pos) const;
     glm::vec3 norm(const glm::vec3 &norm) const;
 public:
-    static TransformMatrix rot(const glm::vec3 &rot, float deg);
-    static TransformMatrix scale(const glm::vec3 &scale);
+    static TransformPtr rot(const glm::vec3 &rot, float deg);
+    static TransformPtr scale(const glm::vec3 &scale);
 private:
     glm::mat3 M;
     glm::mat3 N;
