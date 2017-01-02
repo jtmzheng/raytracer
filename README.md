@@ -9,4 +9,5 @@ Soft shadows
 ![](img/soft_shadows.png)
 
 Low-res obj model
+
 ![](img/bb.png)
