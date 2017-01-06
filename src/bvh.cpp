@@ -97,17 +97,10 @@ bool BvhNode::intersect(
     if (!inBB(eye, dir, rng))
         return false;
 
-    HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr};
-    if (left->intersect(eye, dir, hr, rng)) {
-        minHr = hr;
-    }
-
-    if (right->intersect(eye, dir, hr, rng)) {
-        if (hr.t < minHr.t) {
-            minHr = hr;
-        }
-    }
-
+    // NB: Each leaf node will check whether hr.t < minHr.t passed down
+    // so we can safely delegate to the leaf nodes
+    left->intersect(eye, dir, minHr, rng);
+    right->intersect(eye, dir, minHr, rng);
     return minHr.surf != nullptr;
 }
 
@@ -123,14 +116,8 @@ bool BvhLeaf::intersect(
     if (!BvhNode::inBB(eye, dir, rng))
         return false;
 
-    // NB: It should be safe to reuse HitRecords for _triangles_ (TODO)
-    HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr};
     for (const auto &triangle : mesh) {
-        if (triangle->intersect(eye, dir, hr, rng)) {
-            if (hr.t < minHr.t) {
-                minHr = hr;
-            }
-        }
+        triangle->intersect(eye, dir, minHr, rng);
     }
 
     return minHr.surf != nullptr;

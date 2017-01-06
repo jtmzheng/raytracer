@@ -45,9 +45,13 @@ bool Triangle::intersect(
     if (isFinite() && (beta < 0 || beta > (1 - gamma)))
         return false;
 
-    hr.t = t;
-    hr.surf = this;
-    return true;
+    // Assign t iff smaller than current t (intersect closer)
+    if (t < hr.t) {
+        hr.t = t;
+        hr.surf = this;
+        return true;
+    }
+    return false;
 }
 
 glm::vec3 Triangle::getNorm(const glm::vec3 &pos) const {

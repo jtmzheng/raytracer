@@ -95,12 +95,7 @@ bool ObjObject::intersect(
         if (tz.first > ty.second || tz.first > tx.second) return false;
 
         for (const auto &triangle : triangles) {
-            HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr};
-            if (triangle->intersect(eye, dir, hr, rng)) {
-                if (hr.t < minHr.t) {
-                    minHr = hr;
-                }
-            }
+            triangle->intersect(eye, dir, minHr, rng);
         }
     }
 

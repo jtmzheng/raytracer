@@ -69,7 +69,7 @@ void RayTracer::tracePixel(const glm::vec3 &l, Image &img, uint i, uint j) const
 
 glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int depth) const {
     // Find surface with minimum intersection for ray
-    HitRecord minHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
+    HitRecord minHr{std::numeric_limits<float>::max(), eye, dir, nullptr};
     if (!intersect(eye, dir, minHr)) {
         // TODO: Add background if no intersection found
         return glm::vec3();
@@ -120,7 +120,7 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
             auto halfVec = glm::normalize(lightDir + v);
 
             // Check if in shadow by sending shadow ray to light source
-            HitRecord shadHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
+            HitRecord shadHr{std::numeric_limits<float>::max(), int_pt + EPS*lightDir, lightDir, nullptr};
             if (intersect(int_pt + EPS*lightDir, lightDir, shadHr, make_pair(0, lightDist + 2*light->rad))) {
                 // Don't shade if in shadow of another surface
                 continue;

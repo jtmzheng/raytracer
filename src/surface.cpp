@@ -27,12 +27,13 @@ bool Sphere::intersect(
 
     float t1 = (-b - std::sqrt(d))/(2*a),
           t2 = (-b + std::sqrt(d))/(2*a);
-    if (t1 > rng.first && t1 < rng.second) {
+
+    if (t1 > rng.first && t1 < rng.second && t1 < hr.t) {
         hr.t = t1;
         hr.surf = this;
         return true;
     }
-    if (t2 > rng.first && t2 < rng.second) {
+    if (t2 > rng.first && t2 < rng.second && t2 < hr.t) {
         hr.t = t2;
         hr.surf = this;
         return true;
