@@ -48,7 +48,7 @@ int main(int ac, char *av[])
         cerr << "Exception of unknown type!" << endl;
     }
 
-    Image img(256, 256);
+    Image img(1024, 1024);
     RayTracer rt(num_threads,
         glm::vec3(0, 20, 100),
         glm::vec3(0, 0, 0),

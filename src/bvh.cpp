@@ -99,8 +99,9 @@ bool BvhNode::intersect(
 
     // NB: Each leaf node will check whether hr.t < minHr.t passed down
     // so we can safely delegate to the leaf nodes
-    left->intersect(eye, dir, minHr, rng);
-    right->intersect(eye, dir, minHr, rng);
+    // TODO: Should minHr.t and rng.second are redundant
+    left->intersect(eye, dir, minHr, make_pair(rng.first, min(rng.second, minHr.t)));
+    right->intersect(eye, dir, minHr, make_pair(rng.first, min(rng.second, minHr.t)));
     return minHr.surf != nullptr;
 }
 

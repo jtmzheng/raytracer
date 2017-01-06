@@ -90,6 +90,7 @@ bool RayTracer::intersect(
         if (obj->intersect(eye, dir, hr, rng)) {
             if (hr.t < minHr.t) {
                 minHr = hr;
+                rng.second = min(rng.second, hr.t);
             }
         }
     }
