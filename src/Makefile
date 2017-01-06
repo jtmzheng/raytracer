@@ -27,6 +27,7 @@ DEPS = raytracer.o \
 	triangle.o \
 	objobject.o \
 	transform.o \
+	bvh.o \
 
 all: $(TARGET)
 
@@ -56,6 +57,9 @@ triangle.o: triangle.cpp
 
 transform.o: transform.cpp
 	$(CC) $(CFLAGS) -c transform.cpp -o transform.o
+
+bvh.o: bvh.cpp
+	$(CC) $(CFLAGS) -c bvh.cpp -o bvh.o
 
 clean:
 	rm -f *.o raytrace

@@ -23,7 +23,8 @@ typedef shared_ptr<Material> MaterialPtr;
 class Triangle : public Surface {
 public:
     Triangle(Vertex a, Vertex b, Vertex c, MaterialPtr mat) :
-        Surface(mat), va(a), vb(b), vc(c), ba(a.p - b.p), ca(a.p - c.p) { }
+        Surface(mat), centroid((a.p + b.p + c.p)/3.f),
+        va(a), vb(b), vc(c), ba(a.p - b.p), ca(a.p - c.p) { }
     virtual ~Triangle() { }
     virtual bool isFinite() const { return true; }
 
@@ -33,9 +34,10 @@ public:
         HitRecord &hr,
         const std::pair<float, float> &rng) const;
     virtual glm::vec3 getNorm(const glm::vec3 &p) const;
+public:
+    const glm::vec3 centroid;
+    const Vertex va, vb, vc;
 protected:
-    Vertex va, vb, vc;
-
     // Basis vectors for triangle (avoid recalculating)
     glm::vec3 ba, ca;
 };

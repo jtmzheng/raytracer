@@ -109,6 +109,8 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
     thread_local uniform_real_distribution<float> dist(0, 1);
 
     glm::vec3 col(0, 0, 0);
+
+    // Add color contribution for each light
     for (const auto &light : lights) {
         glm::vec3 lightCol(0, 0, 0);
         for (uint i = 0; i < SHADOWSAMPLES; ++i) {
@@ -119,7 +121,7 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
 
             // Check if in shadow by sending shadow ray to light source
             HitRecord shadHr{std::numeric_limits<float>::max(), glm::vec3(), glm::vec3(), nullptr};
-            if (intersect(int_pt + EPS*lightDir, lightDir, shadHr, make_pair(0, lightDist))) {
+            if (intersect(int_pt + EPS*lightDir, lightDir, shadHr, make_pair(0, lightDist + 2*light->rad))) {
                 // Don't shade if in shadow of another surface
                 continue;
             }

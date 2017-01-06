@@ -67,25 +67,15 @@ vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, 
             }
             obj->triangles.emplace_back(make_shared<Triangle>(verts[0], verts[1], verts[2], mats[mid]));
         }
+
+        // TODO: This is a ghetto way of adding the bvh to the obj
+        obj->bvh = make_shared<Bvh>(obj->triangles);
         objs.emplace_back(obj);
     }
 
     return objs;
 }
 
-// Slab intersection (TODO: Factor out of here)
-static inline pair<float, float> calcT(float xe, float xd, const pair<float, float> &rng) {
-    float a = 1.0f/xd;
-    auto pr = make_pair(0.0f, 0.0f);
-    if (a >= 0) {
-        pr.first = a*(rng.first - xe);
-        pr.second = a*(rng.second - xe);
-    } else {
-        pr.second = a*(rng.first - xe);
-        pr.first = a*(rng.second - xe);
-    }
-    return pr;
-}
 
 bool ObjObject::intersect(
     const glm::vec3 &eye,
@@ -93,19 +83,23 @@ bool ObjObject::intersect(
     HitRecord &minHr,
     const std::pair<float, float> &rng) const
 {
-    /*TODO: Refactor out this bounding box computation */
-    auto tx = calcT(eye.x, dir.x, box.x);
-    auto ty = calcT(eye.y, dir.y, box.y);
-    auto tz = calcT(eye.z, dir.z, box.z);
-    if (tx.first > ty.second || tx.first > tz.second) return false;
-    if (ty.first > tx.second || ty.first > tz.second) return false;
-    if (tz.first > ty.second || tz.first > tx.second) return false;
+    // Use linear search if no bvh for obj
+    if (bvh != nullptr) {
+        return bvh->intersect(eye, dir, minHr, rng);
+    } else {
+        auto tx = calcT(eye.x, dir.x, box.x);
+        auto ty = calcT(eye.y, dir.y, box.y);
+        auto tz = calcT(eye.z, dir.z, box.z);
+        if (tx.first > ty.second || tx.first > tz.second) return false;
+        if (ty.first > tx.second || ty.first > tz.second) return false;
+        if (tz.first > ty.second || tz.first > tx.second) return false;
 
-    for (const auto &triangle : triangles) {
-        HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr};
-        if (triangle->intersect(eye, dir, hr, rng)) {
-            if (hr.t < minHr.t) {
-                minHr = hr;
+        for (const auto &triangle : triangles) {
+            HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr};
+            if (triangle->intersect(eye, dir, hr, rng)) {
+                if (hr.t < minHr.t) {
+                    minHr = hr;
+                }
             }
         }
     }
