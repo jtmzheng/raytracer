@@ -1,13 +1,15 @@
-## Raytracer
+# Raytracer
 
 Makes use of code from CS488 Fall 2015 starter code
 
+##No soft shadows
+
 ![](img/first.png)
 
-Soft shadows
+##Soft shadows
 
 ![](img/soft_shadows.png)
 
-Low-res obj model
+##OBJ Model
 
-![](img/bb.png)
+![](img/obj.png)
