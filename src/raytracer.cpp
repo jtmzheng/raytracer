@@ -100,7 +100,7 @@ bool RayTracer::intersect(
 
 glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
     auto int_pt = eye + hr.dir*hr.t;
-    auto v = -hr.dir, norm = hr.surf->getNorm(int_pt);
+    auto v = -hr.dir;
     // Surface params
     const auto &mat = hr.surf->getMaterial();
 
@@ -121,7 +121,7 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
             auto halfVec = glm::normalize(lightDir + v);
 
             // Check if in shadow by sending shadow ray to light source
-            HitRecord shadHr{std::numeric_limits<float>::max(), int_pt + EPS*lightDir, lightDir, nullptr};
+            HitRecord shadHr{std::numeric_limits<float>::max(), int_pt + EPS*lightDir, lightDir, nullptr, glm::vec3()};
             if (intersect(int_pt + EPS*lightDir, lightDir, shadHr, make_pair(0, lightDist + 2*light->rad))) {
                 // Don't shade if in shadow of another surface
                 continue;
@@ -129,11 +129,11 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
 
             // TODO: Attenuate light based on distance
             auto intensity = light->intensity;
-            auto diffMag = max(0.0f, glm::dot(norm, lightDir));
+            auto diffMag = max(0.0f, glm::dot(hr.norm, lightDir));
             float specMag = 0;
 
             // Ignore Phong specular shading if mirrored surface
-            specMag = glm::pow(glm::max(0.0f, glm::dot(norm, halfVec)), mat.p);
+            specMag = glm::pow(glm::max(0.0f, glm::dot(hr.norm, halfVec)), mat.p);
             lightCol.r += mat.kd.r*intensity.r*diffMag + mat.ks.r*intensity.r*specMag;
             lightCol.g += mat.kd.g*intensity.g*diffMag + mat.ks.g*intensity.g*specMag;
             lightCol.b += mat.kd.b*intensity.b*diffMag + mat.ks.b*intensity.b*specMag;
@@ -146,7 +146,7 @@ glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
     // Mirror reflections
     if (mat.isMirror && depth < MAX_DEPTH) {
         // NB: ks should probably be km here
-        auto r = glm::normalize(hr.dir - 2*(glm::dot(hr.dir, norm))*norm);
+        auto r = glm::normalize(hr.dir - 2*(glm::dot(hr.dir, hr.norm))*hr.norm);
         col += mat.km * raycolor(int_pt + EPS*r, r, depth + 1);
     }
 

@@ -15,6 +15,7 @@ struct HitRecord {
 
     // A HitRecord should _never_ outlive surface it hits
     const Surface *surf;
+    glm::vec3 norm;
 };
 
 // An Object instance is something a ray can intersect

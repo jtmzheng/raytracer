@@ -49,14 +49,14 @@ bool Triangle::intersect(
     if (t < hr.t) {
         hr.t = t;
         hr.surf = this;
+        hr.norm = getNorm(glm::vec3(1 - gamma - beta, beta, gamma));
         return true;
     }
     return false;
 }
 
-glm::vec3 Triangle::getNorm(const glm::vec3 &pos) const {
-    // TODO: Normal interpolation
-    return va.n;
+glm::vec3 Triangle::getNorm(const glm::vec3 &bary) const {
+    return va.n*bary.x + vb.n*bary.y + vc.n*bary.z;
 }
 
 glm::vec3 Plane::getNorm(const glm::vec3 &pos) const {

@@ -31,11 +31,13 @@ bool Sphere::intersect(
     if (t1 > rng.first && t1 < rng.second && t1 < hr.t) {
         hr.t = t1;
         hr.surf = this;
+        hr.norm = getNorm(eye + hr.t*dir);
         return true;
     }
     if (t2 > rng.first && t2 < rng.second && t2 < hr.t) {
         hr.t = t2;
         hr.surf = this;
+        hr.norm = getNorm(eye + hr.t*dir);
         return true;
     }
     return false;

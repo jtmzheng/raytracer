@@ -15,7 +15,7 @@
 using namespace std;
 
 const static float ASPECT_RATIO = 1.0f;
-const static float MAX_DEPTH = 1;
+const static float MAX_DEPTH = 10;
 
 class RayTracer {
 public:
