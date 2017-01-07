@@ -13,3 +13,7 @@ Makes use of code from CS488 Fall 2015 starter code
 ##OBJ Model
 
 ![](img/obj.png)
+
+##Interpolating vertex normals
+
+![](img/interpnorms.png)
