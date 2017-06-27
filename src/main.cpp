@@ -1,7 +1,6 @@
 #include <glm/vec3.hpp>
 #include <iostream>
 #include <memory>
-#include <boost/program_options.hpp>
 #include <chrono>
 #include <thread>
 
@@ -13,37 +12,24 @@
 #include "transform.hpp"
 
 #include "tiny_obj_loader.h"
+#include "CLI11.hpp"
 
 using namespace std;
-namespace po = boost::program_options;
 
 int main(int ac, char *av[])
 {
-    // Parse options using boost::program_options
+    // Parse options using CLI11
     string file_name = "./img/test.png";
     uint num_threads = thread::hardware_concurrency();
+    CLI::App app("Raytracer");
+    app.add_option("-f,--file,file", file_name, "Output file name");
+    app.add_option("-t,--thread,thread", num_threads, "Number of threads");
+
     try {
-        po::options_description desc("Allowed options");
-        desc.add_options()
-            ("file,f", po::value<string>(&file_name), "file name")
-            ("threads,t", po::value<uint>(&num_threads), "number of threads")
-        ;
-
-        po::variables_map vm;
-        po::store(po::parse_command_line(ac, av, desc), vm);
-        po::notify(vm);
-
-        if (vm.count("file")) {
-            cout << "Outputing image to "
-                 << vm["file"].as<string>() << endl;
-        } else {
-            cout << "Outputing image to ./img/test.png" << endl;
-        }
-
+        app.parse(ac, av);
         cout << "Using " << num_threads << " threads" << endl;
-    } catch(exception& e) {
-        cerr << "error: " << e.what() << endl;
-        return 1;
+    } catch(const CLI::Error &e) {
+        return app.exit(e);
     } catch(...) {
         cerr << "Exception of unknown type!" << endl;
     }

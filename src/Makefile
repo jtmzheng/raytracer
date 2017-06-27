@@ -1,12 +1,11 @@
-CC = g++
-CFLAGS = -Wall -std=c++11 -g
+CC = clang++
+CFLAGS = -Wall -std=c++11 -g -O2
 TARGET = main
 
 INC_PATH = -I ../shared/ \
 	-I ../shared/include/ \
 	-I ../shared/gl3w/ \
 	-I ../shared/lodepng/ \
-	-I /usr/local/boost_1_61_0/ \
 
 LIB_PATH = -L ../lib/ \
 
@@ -14,7 +13,6 @@ LDLIBS = -llodepng \
 	-pthread \
 	-lglfw3 \
 	-lGL \
-	-lboost_program_options \
 	-lpthread \
 
 CFLAGS += $(INC_PATH)
