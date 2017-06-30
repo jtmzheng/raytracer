@@ -1,0 +1,89 @@
+{
+    "models": [{
+        "name": "teapot",
+        "file": "../obj/teapot.obj",
+        "dir": "../obj/"
+    }],
+    "materials": [{
+        "name": "a",
+        "kd": [0.7, 1.0, 0.7],
+        "ks": [0.1, 0.1, 0.1],
+        "p": 10,
+        "mirror": true
+    }, {
+        "name": "b",
+        "kd": [0.7, 0.1, 0.3],
+        "ks": [0.1, 0.1, 0.1],
+        "p": 10,
+        "mirror": true
+    }, {
+        "name": "c",
+        "kd": [0.9, 0.9, 0.9],
+        "ks": [0.9, 0.9, 0.9],
+        "p": 100,
+        "mirror": true
+    }],
+    "scene": {
+        "camera": {
+            "eye": [0, 20, 100],
+            "look_at": [0, 0, 0],
+            "up": [0, 1, 0],
+            "fovy": 50
+        },
+        "models": [{
+            "type": "sphere",
+            "pos": [0, -25, -50],
+            "scale": 25,
+            "material": "b"
+        }, {
+            "type": "sphere",
+            "pos": [0, 30, -50],
+            "scale": 25,
+            "material": "a"
+        }, {
+            "type": "plane",
+            "a": [-25, 0, 0],
+            "b": [-25, 5, 0],
+            "c": [-25, -5, -5],
+            "material": "c"
+        }, {
+            "type": "ref",
+            "name": "teapot",
+            "transforms": [{
+                "type": "rot",
+                "axis": [0, 0, 1],
+                "angle": 90
+            }, {
+                "type": "scale",
+                "scale": [25, 25, 25]
+            }]
+        }, {
+            "type": "ref",
+            "name": "teapot",
+            "transforms": [{
+                "type": "rot",
+                "axis": [0, 0, 1],
+                "angle": 90
+            }, {
+                "type": "scale",
+                "scale": [25, 25, 25]
+            }, {
+                "type": "rot",
+                "axis": [0, 1, 0],
+                "angle": 180
+            }, {
+                "type": "translate",
+                "s": [15, 0, 0]
+            }]
+        }],
+        "lights": [{
+            "pos": [25, 150, 0],
+            "intensity": [0.7, 0.7, 0.7],
+            "rad": 10
+        }, {
+            "pos": [0, 20, 50],
+            "intensity": [0.7, 0.7, 0.7],
+            "rad": 10
+        }]
+    }
+}

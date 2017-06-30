@@ -26,6 +26,7 @@ DEPS = raytracer.o \
 	objobject.o \
 	transform.o \
 	bvh.o \
+	parser.o \
 
 all: $(TARGET)
 
@@ -58,6 +59,9 @@ transform.o: transform.cpp
 
 bvh.o: bvh.cpp
 	$(CC) $(CFLAGS) -c bvh.cpp -o bvh.o
+
+parser.o: parser.cpp
+	$(CC) $(CFLAGS) -c parser.cpp -o parser.o
 
 clean:
 	rm -f *.o raytrace

@@ -2,6 +2,7 @@
 #define MATERIAL_H
 
 #include <glm/glm.hpp>
+#include <memory>
 
 using glm::vec3;
 
@@ -17,4 +18,6 @@ public:
     vec3 km;
 };
 
+
+typedef std::shared_ptr<Material> MaterialPtr;
 #endif

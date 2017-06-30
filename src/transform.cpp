@@ -42,6 +42,10 @@ TransformPtr TransformMatrix::scale(const glm::vec3 &scale) {
     return std::make_shared<TransformMatrix>(mat);
 }
 
+TransformPtr TransformTrans::translate(const glm::vec3 &s) {
+    return std::make_shared<TransformTrans>(s);
+}
+
 
 glm::vec3 TransformMatrix::pos(const glm::vec3 &pos) const {
     return M * pos;

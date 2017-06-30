@@ -24,6 +24,8 @@ typedef std::shared_ptr<Transform> TransformPtr;
 class TransformChain : public Transform {
 public:
     TransformChain(std::initializer_list<TransformPtr> xforms) : Transform(), xforms(xforms) { }
+    TransformChain(const std::vector<TransformPtr> &xforms) : Transform(), xforms(xforms) { }
+
     virtual ~TransformChain() { }
     glm::vec3 pos(const glm::vec3 &pos) const;
     glm::vec3 norm(const glm::vec3 &norm) const;
@@ -52,6 +54,8 @@ public:
     TransformTrans(const glm::vec3 &trans) : Transform(), s(trans) { }
     glm::vec3 pos(const glm::vec3 &pos) const { return pos + s; }
     glm::vec3 norm(const glm::vec3 &norm) const { return norm; }
+public:
+    static TransformPtr translate(const glm::vec3 &trans);
 private:
     glm::vec3 s;
 };

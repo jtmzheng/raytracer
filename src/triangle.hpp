@@ -17,8 +17,6 @@ public:
     const glm::vec2 tx;
 };
 
-typedef shared_ptr<Material> MaterialPtr;
-
 
 class Triangle : public Surface {
 public:
