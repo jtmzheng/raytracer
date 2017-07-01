@@ -7,6 +7,8 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <atomic>
+#include <condition_variable>
 
 #include "image.hpp"
 #include "light.hpp"
@@ -16,6 +18,8 @@ using namespace std;
 
 const static float ASPECT_RATIO = 1.0f;
 const static float MAX_DEPTH = 10;
+
+struct JobData;
 
 class RayTracer {
 public:
@@ -52,8 +56,9 @@ private:
         pair<float, float> rng = make_pair(0, numeric_limits<float>::max())) const;
 
     // Worker job to return color per pixel
-    void traceRows(const glm::vec3 &l, Image &img, uint chunk, uint chunkSize) const;
+    void traceRows(const glm::vec3 &l, JobData &job, atomic<uint> &jobsLeft, Image &img, condition_variable &lbCv) const;
     void tracePixel(const glm::vec3 &l, Image &img, uint i, uint j) const;
+    void loadBalance(vector<JobData> &jobs, atomic<uint> &jobsLeft, mutex &lbMutex, condition_variable &lbCv) const;
 
     // Shade a pixel using the HitRecord for the ray through that pixel
     glm::vec3 shade(const HitRecord &hr, int depth = 0) const;

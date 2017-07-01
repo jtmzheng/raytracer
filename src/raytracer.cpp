@@ -8,36 +8,108 @@
 #include <thread>
 #include <mutex>
 #include <algorithm>
+#include <queue>
 
 static const float EPS = 1e-3;
 static const float SUBSAMPLES = 4;
 static const float SUBSAMPLE_DIV = 1.0f / SUBSAMPLES;
 static const float SHADOWSAMPLES = 16;
 
+// Per job specific data
+struct JobData {
+    queue<pair<uint, uint>> jobsQueue;
+    mutex queueMutex;
+};
+
 void RayTracer::render(Image &img) {
     // NB: 'c' is centre of image plane, 'l' is lower left hand corner
     auto c = eye - w*focalLength;
     auto l = c - u*impW/2.0f - v*impH/2.0f;
     auto chunkSize = (img.height() / numThreads) + (img.height() % numThreads != 0);
-
     vector<thread> workers(numThreads);
-    for (uint i = 0; i < numThreads; ++i) {
+    vector<JobData> jobs(numThreads);
+    atomic<uint> jobsLeft(img.width() * img.height());
+    mutex lbMutex;
+    condition_variable lbCv;
+
+    for (uint chunk = 0; chunk < numThreads; ++chunk) {
+        for (uint j = chunk*chunkSize; j < min((chunk+1)*chunkSize, img.height()); ++j) {
+            for (uint i = 0; i < img.width(); ++i) {
+                jobs[chunk].jobsQueue.emplace(make_pair(i, j));
+            }
+        }
+
         // NB: We can bind a reference to thread since thread lifetime < lifetime of this function
-        workers[i] = thread(&RayTracer::traceRows, this, ref(l), ref(img), i, chunkSize);
+        workers[chunk] = thread(
+            &RayTracer::traceRows, this, ref(l), ref(jobs[chunk]), ref(jobsLeft), ref(img), ref(lbCv)
+        );
     }
 
+    auto lbThread = thread(&RayTracer::loadBalance, this, ref(jobs), ref(jobsLeft), ref(lbMutex), ref(lbCv));
+    cout << "Waiting for threads to join..." << endl;
     std::for_each(workers.begin(), workers.end(), [](thread& x){ x.join(); });
+    lbThread.join();
 }
 
-void RayTracer::traceRows(const glm::vec3 &l, Image &img, uint chunk, uint chunkSize) const {
-    // TODO: Logging should be lock guarded
-    cout << "Start chunk " << chunk << endl;
-    for (uint j = chunk*chunkSize; j < min((chunk+1)*chunkSize, img.height()); ++j) {
-        for (uint i = 0; i < img.width(); ++i) {
+void RayTracer::traceRows(const glm::vec3 &l, JobData &job, atomic<uint> &jobsLeft, Image &img, condition_variable &lbCv) const {
+    while (jobsLeft > 0) {
+        job.queueMutex.lock();
+        if (job.jobsQueue.empty()) {
+            lbCv.notify_one();
+            job.queueMutex.unlock();
+        } else {
+            auto i = job.jobsQueue.front().first;
+            auto j = job.jobsQueue.front().second;
+            job.jobsQueue.pop();
+            job.queueMutex.unlock();
+            jobsLeft--;
             tracePixel(l, img, i, j);
         }
     }
-    cout << "Done chunk " << chunk << endl;
+    cout << "Done job" << endl;
+}
+
+void RayTracer::loadBalance(vector<JobData> &jobs, atomic<uint> &jobsLeft, mutex &lbMutex, condition_variable &lbCv) const {
+    unique_lock<mutex> l(lbMutex);
+    while (jobsLeft > 0) {
+        lbCv.wait(l);   // NB: This may be missed, but still correct
+        if (jobsLeft < 10*jobs.size()) {
+            // Stop loadbalancing when there are not enough jobs to be worthwhile
+            cout << "Stopping loadbalancing... " << jobsLeft << " jobs left" << endl;
+            break;
+        }
+
+        for (auto &job : jobs) {
+            job.queueMutex.lock();
+        }
+
+        // Rebalance all the queues (TODO: Optimize)
+        vector<queue<pair<uint, uint>>> aux(jobs.size());
+        vector<pair<uint, uint>> src;
+        for (auto &job : jobs) {
+            while (!job.jobsQueue.empty()) {
+                src.emplace_back(job.jobsQueue.front());
+                job.jobsQueue.pop();
+            }
+        }
+
+        uint n = jobsLeft;
+        while (n > 0) {
+            aux[n % jobs.size()].emplace(src.back());
+            src.pop_back();
+            n--;
+        }
+
+        cout << "Queue Sizes: ";
+        for (uint i = 0; i < jobs.size(); ++i) {
+            auto &job = jobs[i];
+            job.jobsQueue = std::move(aux[i]);
+
+            cout << job.jobsQueue.size() << " ";
+            job.queueMutex.unlock();
+        }
+        cout << endl;
+    }
 }
 
 void RayTracer::tracePixel(const glm::vec3 &l, Image &img, uint i, uint j) const {
