@@ -9,6 +9,7 @@
 #include <mutex>
 #include <algorithm>
 #include <queue>
+#include <chrono>
 
 static const float EPS = 1e-3;
 static const float SUBSAMPLES = 4;
@@ -57,6 +58,9 @@ void RayTracer::traceRows(const glm::vec3 &l, JobData &job, atomic<uint> &jobsLe
         if (job.jobsQueue.empty()) {
             lbCv.notify_one();
             job.queueMutex.unlock();
+
+            // Sleep for half second to reduce busy waiting
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else {
             auto i = job.jobsQueue.front().first;
             auto j = job.jobsQueue.front().second;
@@ -72,10 +76,11 @@ void RayTracer::traceRows(const glm::vec3 &l, JobData &job, atomic<uint> &jobsLe
 void RayTracer::loadBalance(vector<JobData> &jobs, atomic<uint> &jobsLeft, mutex &lbMutex, condition_variable &lbCv) const {
     unique_lock<mutex> l(lbMutex);
     while (jobsLeft > 0) {
-        lbCv.wait(l);   // NB: This may be missed, but still correct
+        // NB: This may be missed, but still correct (want to avoid signals immediately after lb finishes
+        lbCv.wait_for(l, std::chrono::seconds(10));
         if (jobsLeft < 10*jobs.size()) {
-            // Stop loadbalancing when there are not enough jobs to be worthwhile
-            cout << "Stopping loadbalancing... " << jobsLeft << " jobs left" << endl;
+            // Stop load balancing when there are not enough jobs to be worthwhile
+            cout << "Stopping load balancing... " << jobsLeft << " jobs left" << endl;
             break;
         }
 
