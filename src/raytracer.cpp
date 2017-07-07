@@ -78,7 +78,7 @@ void RayTracer::loadBalance(vector<JobData> &jobs, atomic<uint> &jobsLeft, mutex
     while (jobsLeft > 0) {
         // NB: This may be missed, but still correct (want to avoid signals immediately after lb finishes
         lbCv.wait_for(l, std::chrono::seconds(10));
-        if (jobsLeft < 10*jobs.size()) {
+        if (jobsLeft < 100*jobs.size()) {
             // Stop load balancing when there are not enough jobs to be worthwhile
             cout << "Stopping load balancing... " << jobsLeft << " jobs left" << endl;
             break;
@@ -88,28 +88,36 @@ void RayTracer::loadBalance(vector<JobData> &jobs, atomic<uint> &jobsLeft, mutex
             job.queueMutex.lock();
         }
 
-        // Rebalance all the queues (TODO: Optimize)
+        // Rebalance all the queues (pseudo-uniform [sic])
         vector<queue<pair<uint, uint>>> aux(jobs.size());
-        vector<pair<uint, uint>> src;
+        queue<pair<uint, uint>> src;
+        uint perQueue = jobsLeft / jobs.size();
         for (auto &job : jobs) {
-            while (!job.jobsQueue.empty()) {
-                src.emplace_back(job.jobsQueue.front());
+            while (job.jobsQueue.size() > perQueue) {
+                src.emplace(job.jobsQueue.front());
                 job.jobsQueue.pop();
             }
         }
 
-        uint n = jobsLeft;
-        while (n > 0) {
-            aux[n % jobs.size()].emplace(src.back());
-            src.pop_back();
-            n--;
+        // Get each queue up to perQueue
+        for (auto &job : jobs) {
+            while (job.jobsQueue.size() < perQueue && !src.empty()) {
+                job.jobsQueue.emplace(src.front());
+                src.pop();
+            }
+        }
+
+        // Add unbalanced jobs in round robin
+        uint i = 0;
+        while (!src.empty()) {
+            jobs[i % jobs.size()].jobsQueue.emplace(src.front());
+            src.pop();
+            i++;
         }
 
         cout << "Queue Sizes: ";
         for (uint i = 0; i < jobs.size(); ++i) {
             auto &job = jobs[i];
-            job.jobsQueue = std::move(aux[i]);
-
             cout << job.jobsQueue.size() << " ";
             job.queueMutex.unlock();
         }
