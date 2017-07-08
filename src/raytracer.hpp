@@ -61,7 +61,7 @@ private:
     void loadBalance(vector<JobData> &jobs, atomic<uint> &jobsLeft, mutex &lbMutex, condition_variable &lbCv) const;
 
     // Shade a pixel using the HitRecord for the ray through that pixel
-    glm::vec3 shade(const HitRecord &hr, int depth = 0) const;
+    glm::vec3 shade(const glm::vec3 &eye, const HitRecord &hr, int depth = 0) const;
     glm::vec3 raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int depth = 0) const;
 
 private:

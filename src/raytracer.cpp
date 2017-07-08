@@ -160,7 +160,7 @@ glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int de
         return glm::vec3();
     }
 
-    return shade(minHr, depth);
+    return shade(eye, minHr, depth);
 
 }
 
@@ -183,7 +183,7 @@ bool RayTracer::intersect(
     return minHr.surf != nullptr;
 }
 
-glm::vec3 RayTracer::shade(const HitRecord &hr, int depth) const {
+glm::vec3 RayTracer::shade(const glm::vec3 &eye, const HitRecord &hr, int depth) const {
     auto int_pt = eye + hr.dir*hr.t;
     auto v = -hr.dir;
     // Surface params
