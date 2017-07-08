@@ -1,6 +1,8 @@
 #include "surface.hpp"
 
 #include <iostream>
+#include <cmath>
+#include <iostream>
 
 using namespace std;
 
@@ -45,4 +47,13 @@ bool Sphere::intersect(
 
 glm::vec3 Sphere::getNorm(const glm::vec3 &pos) const {
     return glm::normalize(pos - c);
+}
+
+glm::vec2 Sphere::getUV(const glm::vec3 &pos) const {
+    float theta = acos((pos.z - c.z) / rad);
+    float phi = atan2(pos.y - c.y, pos.x - c.x);
+    if (phi < 0) {
+        phi += 2 * M_PI;
+    }
+    return glm::vec2(phi / (2 * M_PI), (M_PI - theta) / M_PI);
 }

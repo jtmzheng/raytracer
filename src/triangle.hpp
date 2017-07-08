@@ -9,12 +9,12 @@ using std::shared_ptr;
 
 class Vertex {
 public:
-    Vertex(glm::vec3 p, glm::vec3 n, glm::vec2 tx) :
-        p(p), n(n), tx(tx) { }
+    Vertex(glm::vec3 p, glm::vec3 n, glm::vec2 uv) :
+        p(p), n(n), uv(uv) { }
 public:
     const glm::vec3 p;
     const glm::vec3 n;
-    const glm::vec2 tx;
+    const glm::vec2 uv;
 };
 
 
@@ -32,6 +32,7 @@ public:
         HitRecord &hr,
         const std::pair<float, float> &rng) const;
     virtual glm::vec3 getNorm(const glm::vec3 &p) const;
+    virtual glm::vec2 getUV(const glm::vec3 &p) const;
 public:
     const glm::vec3 centroid;
     const Vertex va, vb, vc;
@@ -48,6 +49,9 @@ public:
     virtual ~Plane() { }
     bool isFinite() const { return false; }
     glm::vec3 getNorm(const glm::vec3 &p) const;
+
+    // NB: UV is not supported
+    glm::vec2 getUV(const glm::vec3 &p) const { return glm::vec2(); }
 public:
     // Factory
     static shared_ptr<Plane> create(glm::vec3 a, glm::vec3 b, glm::vec3 c, MaterialPtr mtl);

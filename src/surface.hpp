@@ -41,6 +41,7 @@ public:
 
     // Get the normal to the surface at a point p on the surface
     virtual glm::vec3 getNorm(const glm::vec3 &p) const = 0;
+    virtual glm::vec2 getUV(const glm::vec3 &p) const = 0;
     const Material& getMaterial() const { return *mat.get(); }
 private:
     std::shared_ptr<Material> mat;
@@ -59,6 +60,7 @@ public:
         HitRecord &hr,
         const std::pair<float, float> &rng) const;
     glm::vec3 getNorm(const glm::vec3 &p) const;
+    glm::vec2 getUV(const glm::vec3 &p) const;
 private:
     glm::vec3 c;
     float rad;

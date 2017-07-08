@@ -50,10 +50,12 @@ int main(int ac, char *av[])
     rapidjson::Reader reader;
     doc.Parse(file_str.c_str());
 
-    Image img(1024, 1024);
     RayTracer rt = parseSceneCamera(doc, num_threads);
+    auto dim = parseImageDim(doc);
     auto mtl = parseMaterials(doc);
     auto objs = parseScene(doc, mtl);
+    Image img(dim.first, dim.second);
+    cout << "Image resolution: " << dim.first << " x " << dim.second << endl;
     int i = 0;
     for (const auto &obj : objs) {
         rt.addObject(obj, to_string(i++));

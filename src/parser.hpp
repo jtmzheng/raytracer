@@ -5,6 +5,9 @@
 #include "transform.hpp"
 #include "rapidjson/document.h"
 
+// Parse image dimensions
+pair<int, int> parseImageDim(const rapidjson::Document &doc);
+
 // Initialize raytracer camera using json config
 RayTracer parseSceneCamera(const rapidjson::Document &doc, uint num_threads);
 

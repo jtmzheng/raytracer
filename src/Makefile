@@ -22,11 +22,12 @@ DEPS = raytracer.o \
 	surface.o \
 	light.o \
 	material.o \
+	texture.o \
 	triangle.o \
+	parser.o \
 	objobject.o \
 	transform.o \
 	bvh.o \
-	parser.o \
 
 all: $(TARGET)
 
@@ -47,6 +48,9 @@ light.o: light.cpp
 
 material.o: material.cpp
 	$(CC) $(CFLAGS) -c material.cpp -o material.o
+
+texture.o: texture.cpp
+	$(CC) $(CFLAGS) -c texture.cpp -o texture.o
 
 objobject.o: objobject.cpp
 	$(CC) $(CFLAGS) -c objobject.cpp -o objobject.o

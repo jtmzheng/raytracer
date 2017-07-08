@@ -13,7 +13,7 @@ Bvh::Bvh(vector<shared_ptr<Triangle>> &mesh) :
 }
 
 BvhNode::BvhNode(ForwardIt begin, ForwardIt end) {
-    // Partition based on the centroid bounding box
+    // Partition based on the centroid bounding box (use largest dim)
     AABB pb;
     glm::vec3 centroid;
     uint count = 0;
@@ -60,7 +60,7 @@ BvhNode::BvhNode(ForwardIt begin, ForwardIt end) {
 
 BvhLeaf::BvhLeaf(ForwardIt begin, ForwardIt end) : mesh(begin, end) {
     // Copies subrange of mesh in leaf node
-    cout << "Leaf: " << mesh.size() << endl;
+    // cout << "Leaf: " << mesh.size() << endl;
     for (auto t = begin; t != end; t = next(t)) {
         // Dereference iterator, then deref pointer...
         auto &tri = *t;

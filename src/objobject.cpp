@@ -3,6 +3,7 @@
 #include "objobject.hpp"
 #include "material.hpp"
 #include "transform.hpp"
+#include "texture.hpp"
 
 #include <glm/ext.hpp>
 #include <iostream>
@@ -19,16 +20,28 @@ vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, 
         return objs;
     }
 
+    // TODO: Kludge constant km texture
+    auto km = make_shared<TextureConst>(glm::vec3(0.3, 0.3, 0.3));
+
     // Map the tinyob::material into Material instances
     vector<MaterialPtr> mats(materials.size(), nullptr);
     for (size_t i = 0; i < materials.size(); ++i) {
         glm::vec3 kd(materials[i].diffuse[0], materials[i].diffuse[1], materials[i].diffuse[2]);
         glm::vec3 ks(materials[i].specular[0], materials[i].specular[1], materials[i].specular[2]);
-        mats[i] = make_shared<Material>(kd, ks, true, 100);
+        // TODO: Probably pass "mirror" and "p" config down from config (constant for now)
+        mats[i] = make_shared<Material>(
+            make_shared<TextureConst>(kd), make_shared<TextureConst>(ks), km, true, 100
+        );
     }
 
     // Add default material
-    mats.emplace_back(make_shared<Material>(glm::vec3(0.7, 0.7, 0.7), glm::vec3(0.3, 0.3, 0.3), true, 100));
+    mats.emplace_back(make_shared<Material>(
+        make_shared<TextureConst>(glm::vec3(0.7, 0.7, 0.7)),
+        make_shared<TextureConst>(glm::vec3(0.3, 0.3, 0.3)),
+        km,
+        true,
+        100
+    ));
 
     // TODO: No support for texture coordinate right now
     // TODO: Generate normals if none existing

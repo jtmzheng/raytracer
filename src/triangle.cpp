@@ -59,6 +59,10 @@ glm::vec3 Triangle::getNorm(const glm::vec3 &bary) const {
     return va.n*bary.x + vb.n*bary.y + vc.n*bary.z;
 }
 
+glm::vec2 Triangle::getUV(const glm::vec3 &bary) const {
+    return glm::vec2();
+}
+
 glm::vec3 Plane::getNorm(const glm::vec3 &pos) const {
     // All normals on plane are equivalent
     return va.n;

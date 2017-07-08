@@ -8,11 +8,18 @@
 #include "surface.hpp"
 #include "raytracer.hpp"
 #include "material.hpp"
+#include "texture.hpp"
 #include "surface.hpp"
 #include "objobject.hpp"
 #include "transform.hpp"
 
 using namespace std;
+
+// Read image config
+pair<int, int> parseImageDim(const rapidjson::Document &doc) {
+    const auto &scene = doc["scene"];
+    return make_pair(scene["width"].GetInt(), scene["height"].GetInt());
+}
 
 // Initialize raytracer camera using json config
 RayTracer parseSceneCamera(const rapidjson::Document &doc, uint num_threads) {
@@ -24,16 +31,34 @@ RayTracer parseSceneCamera(const rapidjson::Document &doc, uint num_threads) {
         cam["fovy"].GetInt());
 }
 
+// Parse texture image or const
+TexturePtr parseTexture(const rapidjson::Value &val) {
+    if (val.IsString()) {
+        auto img = make_shared<Image>();
+        img->loadPng(val.GetString());
+        return make_shared<TextureImage>(img);
+    } else if (val.IsArray()) {
+        return make_shared<TextureConst>(
+            glm::vec3(val[0].GetFloat(), val[1].GetFloat(), val[2].GetFloat())
+        );
+    }
+
+    return nullptr;
+}
+
 // Read in generated materials from config
 map<string, MaterialPtr> parseMaterials(const rapidjson::Document &doc) {
     map<string, MaterialPtr> mp;
+    // TODO: Support configurable Km
+    auto km = make_shared<TextureConst>(glm::vec3(0.3, 0.3, 0.3));
+
     if (doc.HasMember("materials") && doc["materials"].IsArray()) {
         for (const auto &mtl : doc["materials"].GetArray()) {
+            // TODO: Support texture from images
+            auto kd = parseTexture(mtl["kd"]);
+            auto ks = parseTexture(mtl["ks"]);
             mp[mtl["name"].GetString()] = make_shared<Material>(
-                glm::vec3(mtl["kd"][0].GetFloat(), mtl["kd"][1].GetFloat(), mtl["kd"][2].GetFloat()),
-                glm::vec3(mtl["ks"][0].GetFloat(), mtl["ks"][1].GetFloat(), mtl["ks"][2].GetFloat()),
-                mtl["mirror"].GetBool(),
-                mtl["p"].GetFloat()
+                kd, ks, km, mtl["mirror"].GetBool(), mtl["p"].GetFloat()
             );
         }
     }

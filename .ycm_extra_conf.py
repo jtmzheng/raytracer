@@ -24,6 +24,7 @@ BASE_FLAGS = [
     '-L' + BASE_DIR + '/lib/',
     '-lglfw',
     '-lpthread',
+    '-llodepng',
 ]
 
 SOURCE_EXTENSIONS = [

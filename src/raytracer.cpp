@@ -154,7 +154,7 @@ void RayTracer::tracePixel(const glm::vec3 &l, Image &img, uint i, uint j) const
 
 glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int depth) const {
     // Find surface with minimum intersection for ray
-    HitRecord minHr{std::numeric_limits<float>::max(), eye, dir, nullptr};
+    HitRecord minHr{std::numeric_limits<float>::max(), eye, dir, nullptr, glm::vec3()};
     if (!intersect(eye, dir, minHr)) {
         // TODO: Add background if no intersection found
         return glm::vec3();
@@ -171,7 +171,7 @@ bool RayTracer::intersect(
     std::pair<float, float> rng) const
 {
     for (const auto &obj: objs) {
-        HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr};
+        HitRecord hr{std::numeric_limits<float>::max(), dir, eye, nullptr, glm::vec3()};
         if (obj->intersect(eye, dir, hr, rng)) {
             if (hr.t < minHr.t) {
                 minHr = hr;
@@ -188,6 +188,7 @@ glm::vec3 RayTracer::shade(const glm::vec3 &eye, const HitRecord &hr, int depth)
     auto v = -hr.dir;
     // Surface params
     const auto &mat = hr.surf->getMaterial();
+    const auto uv = hr.surf->getUV(int_pt);
 
     // Local random device since rng is not threadsafe
     thread_local random_device rd;
@@ -212,27 +213,28 @@ glm::vec3 RayTracer::shade(const glm::vec3 &eye, const HitRecord &hr, int depth)
                 continue;
             }
 
-            // TODO: Attenuate light based on distance
+            // TODO: Attenuate light based on distance?
             auto intensity = light->intensity;
             auto diffMag = max(0.0f, glm::dot(hr.norm, lightDir));
             float specMag = 0;
 
-            // Ignore Phong specular shading if mirrored surface
+            // Phong shading (specular + diffuse)
+            auto kd = mat.kd->getCol(uv), ks = mat.ks->getCol(uv);
             specMag = glm::pow(glm::max(0.0f, glm::dot(hr.norm, halfVec)), mat.p);
-            lightCol.r += mat.kd.r*intensity.r*diffMag + mat.ks.r*intensity.r*specMag;
-            lightCol.g += mat.kd.g*intensity.g*diffMag + mat.ks.g*intensity.g*specMag;
-            lightCol.b += mat.kd.b*intensity.b*diffMag + mat.ks.b*intensity.b*specMag;
+            lightCol.r += kd.r*intensity.r*diffMag + ks.r*intensity.r*specMag;
+            lightCol.g += kd.g*intensity.g*diffMag + ks.g*intensity.g*specMag;
+            lightCol.b += kd.b*intensity.b*diffMag + ks.b*intensity.b*specMag;
         }
 
         lightCol /= SHADOWSAMPLES;
         col += lightCol;
     }
 
-    // Mirror reflections
-    if (mat.isMirror && depth < MAX_DEPTH) {
-        // NB: ks should probably be km here
+    // Calculate mirror reflections recursively
+    if (mat.mirror && depth < MAX_DEPTH) {
         auto r = glm::normalize(hr.dir - 2*(glm::dot(hr.dir, hr.norm))*hr.norm);
-        col += mat.km * raycolor(int_pt + EPS*r, r, depth + 1);
+        auto km = mat.km->getCol(uv);
+        col += km * raycolor(int_pt + EPS*r, r, depth + 1);
     }
 
     return col;

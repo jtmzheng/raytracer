@@ -6,7 +6,7 @@
     }],
     "materials": [{
         "name": "a",
-        "kd": [0.7, 1.0, 0.7],
+        "kd": "./earth_flat_map.png",
         "ks": [0.1, 0.1, 0.1],
         "p": 10,
         "mirror": true
@@ -24,6 +24,8 @@
         "mirror": true
     }],
     "scene": {
+        "width": 1024,
+        "height": 1024,
         "camera": {
             "eye": [0, 20, 100],
             "look_at": [0, 0, 0],

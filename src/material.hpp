@@ -4,20 +4,21 @@
 #include <glm/glm.hpp>
 #include <memory>
 
+#include "texture.hpp"
+
 using glm::vec3;
 
 class Material {
 public:
-    Material(vec3 kd, vec3 ks, bool isMirror, float p, vec3 km = vec3(0.3, 0.3, 0.3)) :
-        kd(kd), ks(ks), isMirror(isMirror), p(p), km(km){ }
+    Material(const TexturePtr &kd, const TexturePtr &ks, const TexturePtr &km, bool mirror, float p) :
+        kd(kd), ks(ks), km(km), mirror(mirror), p(p) { }
 public:
-    vec3 kd;
-    vec3 ks;
-    bool isMirror;
+    TexturePtr kd;
+    TexturePtr ks;
+    TexturePtr km;
+    bool mirror;
     float p;
-    vec3 km;
 };
-
 
 typedef std::shared_ptr<Material> MaterialPtr;
 #endif
