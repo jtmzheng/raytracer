@@ -133,6 +133,7 @@ bool Image::loadPng(const std::string &filename) {
         return false;
     }
 
+    std::cout << "Image: " << m_width << " x " << m_height << std::endl;
     delete [] m_data;
     m_data = new double[m_width * m_height * m_colorComponents];
     double color;
