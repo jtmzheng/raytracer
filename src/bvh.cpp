@@ -8,8 +8,8 @@ using namespace std;
 
 Bvh::Bvh(vector<shared_ptr<Triangle>> &mesh) :
     root(mesh.size() > LEAF_SIZE ?
-        shared_ptr<BvhNode>(new BvhNode(mesh.begin(), mesh.end())) :
-        shared_ptr<BvhLeaf>(new BvhLeaf(mesh.begin(), mesh.end()))) {
+        unique_ptr<BvhNode>(new BvhNode(mesh.begin(), mesh.end())) :
+        unique_ptr<BvhNode>(new BvhLeaf(mesh.begin(), mesh.end()))) {
 }
 
 BvhNode::BvhNode(ForwardIt begin, ForwardIt end) {
@@ -46,15 +46,15 @@ BvhNode::BvhNode(ForwardIt begin, ForwardIt end) {
          rightNodes = std::distance(it, end);
 
     if (leftNodes > LEAF_SIZE && rightNodes > 0) {
-        left = make_shared<BvhNode>(begin, it);
+        left = unique_ptr<BvhNode>(new BvhNode(begin, it));
     } else {
-        left = make_shared<BvhLeaf>(begin, it);
+        left = unique_ptr<BvhNode>(new BvhLeaf(begin, it));
     }
 
     if (rightNodes > LEAF_SIZE && leftNodes > 0) {
-        right = make_shared<BvhNode>(it, end);
+        right = unique_ptr<BvhNode>(new BvhNode(it, end));
     } else {
-        right = make_shared<BvhLeaf>(it, end);
+        right = unique_ptr<BvhNode>(new BvhLeaf(it, end));
     }
 }
 

@@ -26,8 +26,8 @@ protected:
         const glm::vec3 &dir,
         const std::pair<float, float> &rng) const;
 private:
-    std::shared_ptr<BvhNode> left;
-    std::shared_ptr<BvhNode> right;
+    std::unique_ptr<BvhNode> left;
+    std::unique_ptr<BvhNode> right;
 };
 
 
@@ -56,6 +56,6 @@ public:
         HitRecord &hr,
         const std::pair<float, float> &rng) const { return root->intersect(eye, dir, hr, rng); }
 private:
-    std::shared_ptr<BvhNode> root;
+    std::unique_ptr<BvhNode> root;
 };
 #endif
