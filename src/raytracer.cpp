@@ -188,7 +188,6 @@ glm::vec3 RayTracer::shade(const glm::vec3 &eye, const HitRecord &hr, int depth)
     auto v = -hr.dir;
     // Surface params
     const auto &mat = hr.surf->getMaterial();
-    const auto uv = hr.surf->getUV(int_pt);
 
     // Local random device since rng is not threadsafe
     thread_local random_device rd;
@@ -207,7 +206,7 @@ glm::vec3 RayTracer::shade(const glm::vec3 &eye, const HitRecord &hr, int depth)
             auto halfVec = glm::normalize(lightDir + v);
 
             // Check if in shadow by sending shadow ray to light source
-            HitRecord shadHr{std::numeric_limits<float>::max(), int_pt + EPS*lightDir, lightDir, nullptr, glm::vec3()};
+            HitRecord shadHr{std::numeric_limits<float>::max(), int_pt + EPS*lightDir, lightDir, nullptr, glm::vec3(), glm::vec2()};
             if (intersect(int_pt + EPS*lightDir, lightDir, shadHr, make_pair(0, lightDist + 2*light->rad))) {
                 // Don't shade if in shadow of another surface
                 continue;
@@ -219,7 +218,7 @@ glm::vec3 RayTracer::shade(const glm::vec3 &eye, const HitRecord &hr, int depth)
             float specMag = 0;
 
             // Phong shading (specular + diffuse)
-            auto kd = mat.kd->getCol(uv), ks = mat.ks->getCol(uv);
+            auto kd = mat.kd->getCol(hr.uv), ks = mat.ks->getCol(hr.uv);
             specMag = glm::pow(glm::max(0.0f, glm::dot(hr.norm, halfVec)), mat.p);
             lightCol.r += kd.r*intensity.r*diffMag + ks.r*intensity.r*specMag;
             lightCol.g += kd.g*intensity.g*diffMag + ks.g*intensity.g*specMag;
@@ -233,7 +232,7 @@ glm::vec3 RayTracer::shade(const glm::vec3 &eye, const HitRecord &hr, int depth)
     // Calculate mirror reflections recursively
     if (mat.mirror && depth < MAX_DEPTH) {
         auto r = glm::normalize(hr.dir - 2*(glm::dot(hr.dir, hr.norm))*hr.norm);
-        auto km = mat.km->getCol(uv);
+        auto km = mat.km->getCol(hr.uv);
         col += km * raycolor(int_pt + EPS*r, r, depth + 1);
     }
 

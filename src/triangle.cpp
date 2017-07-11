@@ -50,6 +50,7 @@ bool Triangle::intersect(
         hr.t = t;
         hr.surf = this;
         hr.norm = getNorm(glm::vec3(1 - gamma - beta, beta, gamma));
+        hr.uv = getUV(glm::vec3(1 - gamma - beta, beta, gamma));
         return true;
     }
     return false;
@@ -60,7 +61,7 @@ glm::vec3 Triangle::getNorm(const glm::vec3 &bary) const {
 }
 
 glm::vec2 Triangle::getUV(const glm::vec3 &bary) const {
-    return glm::vec2();
+    return va.uv*bary.x + vb.uv*bary.y + vc.uv*bary.z;
 }
 
 glm::vec3 Plane::getNorm(const glm::vec3 &pos) const {

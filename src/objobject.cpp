@@ -7,8 +7,75 @@
 
 #include <glm/ext.hpp>
 #include <iostream>
+#include <map>
 
-vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, const Transform &xform) {
+using namespace std;
+
+
+map<int, glm::vec3> getOrCreateNormals(
+    const vector<tinyobj::shape_t> &shapes,
+    const tinyobj::attrib_t &attrib);
+
+
+// NB: Maps vertex index (from obj file) to normals (either created or loaded)
+map<int, glm::vec3> getOrCreateNormals(
+    const vector<tinyobj::shape_t> &shapes,
+    const tinyobj::attrib_t &attrib)
+{
+    map<int, glm::vec3> mpVertNorm; // Map vertex id to normal (1 to 1)
+    map<int, int> mpVertCount;      // Number of faces vertex belongs in
+    for (size_t s = 0; s < shapes.size(); ++s) {
+        for (size_t i = 0; i < shapes[s].mesh.indices.size()/3; ++i) {
+            if (shapes[s].mesh.indices[3*i].normal_index == -1) {
+                // Generate (not encoded in obj file)
+                vector<glm::vec3> v(3);
+                for (uint k = 0; k < v.size(); ++k) {
+                    auto idx = shapes[s].mesh.indices[3*i + k];
+                    auto vidx = idx.vertex_index;
+                    v[k] = glm::vec3(
+                        attrib.vertices[3*vidx],
+                        attrib.vertices[3*vidx+1],
+                        attrib.vertices[3*vidx+2]
+                    );
+                }
+                // NB: Assumes winding order is correct
+                auto faceNorm = glm::normalize(glm::cross(v[1]-v[0], v[2]-v[0]));
+                for (uint k = 0; k < v.size(); ++k) {
+                    auto idx = shapes[s].mesh.indices[3*i + k];
+                    auto vidx = idx.vertex_index;
+                    mpVertNorm[vidx] += faceNorm;
+                    mpVertCount[vidx]++;
+                }
+            } else {
+                // Load and normalize (not guarenteed to be normalized in standard)
+                for (uint k = 0; k < 3; ++k) {
+                    auto idx = shapes[s].mesh.indices[3*i + k];
+                    auto vidx = idx.vertex_index;
+                    auto nidx = idx.normal_index;
+                    mpVertNorm[vidx] = glm::normalize((glm::vec3(
+                        attrib.normals[3*nidx],
+                        attrib.normals[3*nidx+1],
+                        attrib.normals[3*nidx+2]
+                    )));
+                }
+            }
+        }
+    }
+
+    // Divide to get the average for each generated normal
+    for (const auto &pr : mpVertCount) {
+        mpVertNorm[pr.first] /= pr.second;
+    }
+    cout << "Normals: " << mpVertNorm.size() << endl;
+    return mpVertNorm;
+}
+
+vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(
+    string file,
+    string base,
+    const Transform &xform,
+    const MaterialPtr &def)
+{
     vector<shared_ptr<ObjObject>> objs;
     vector<tinyobj::shape_t> shapes;
     vector<tinyobj::material_t> materials;
@@ -35,16 +102,10 @@ vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, 
     }
 
     // Add default material
-    mats.emplace_back(make_shared<Material>(
-        make_shared<TextureConst>(glm::vec3(0.7, 0.7, 0.7)),
-        make_shared<TextureConst>(glm::vec3(0.3, 0.3, 0.3)),
-        km,
-        true,
-        100
-    ));
+    mats.emplace_back(def);
 
     // TODO: No support for texture coordinate right now
-    // TODO: Generate normals if none existing
+    auto normals = getOrCreateNormals(shapes, attrib); // Model space
     for (size_t s = 0; s < shapes.size(); ++s) {
         auto obj = make_shared<ObjObject>();
         for (size_t i = 0; i < shapes[s].mesh.indices.size()/3; ++i) {
@@ -59,7 +120,7 @@ vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, 
             for (uint k = 0; k < 3; ++k) {
                 auto idx = shapes[s].mesh.indices[3*i + k];
                 auto vidx = idx.vertex_index;
-                auto nidx = idx.normal_index;
+                auto tidx = idx.texcoord_index;
                 auto pos = xform.pos(glm::vec3(
                     attrib.vertices[3*vidx],
                     attrib.vertices[3*vidx+1],
@@ -67,12 +128,11 @@ vector<shared_ptr<ObjObject>> ObjObject::loadFromFile(string file, string base, 
                 ));
                 verts.emplace_back(
                     pos,
-                    glm::normalize(xform.norm(glm::vec3(
-                        attrib.normals[3*nidx],
-                        attrib.normals[3*nidx+1],
-                        attrib.normals[3*nidx+2]
-                    ))),
-                    glm::vec2()
+                    glm::normalize(xform.norm(normals[vidx])),
+                    tidx == -1 ? glm::vec2() : glm::vec2(
+                        attrib.texcoords[2*tidx],
+                        attrib.texcoords[2*tidx+1]
+                    )
                 );
 
                 // Update the AABB

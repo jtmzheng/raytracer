@@ -112,6 +112,12 @@ vector<shared_ptr<Object>> parseScene(const rapidjson::Document &doc, map<string
     }
 
     // Parse scene models
+    auto defMaterial = make_shared<Material>(
+        make_shared<TextureConst>(glm::vec3(0.7, 0.7, 0.7)),
+        make_shared<TextureConst>(glm::vec3(0.3, 0.3, 0.3)),
+        make_shared<TextureConst>(glm::vec3(0.3, 0.3, 0.3)),
+        true,
+        100);
     for (const auto &m : doc["scene"]["models"].GetArray()) {
         string type = m["type"].GetString();
         if (type == "sphere") {
@@ -142,10 +148,12 @@ vector<shared_ptr<Object>> parseScene(const rapidjson::Document &doc, map<string
 
             // Merge transforms into a transform chain and load object
             auto chain = TransformChain(xforms);
+            auto modelDefaultMat = m.HasMember("material") ? mtl[m["material"].GetString()] : defMaterial;
             auto objs = ObjObject::loadFromFile(
                 name_to_file[m["name"].GetString()],
                 name_to_dir[m["name"].GetString()],
-                chain
+                chain,
+                modelDefaultMat
             );
             std::copy(
                 std::make_move_iterator(objs.begin()),

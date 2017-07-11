@@ -21,7 +21,7 @@ using namespace std;
 int main(int ac, char *av[])
 {
     // Parse options using CLI11
-    string file_name = "./img/test.png", input_file = "test.json";
+    string file_name = "./img/test.png", input_file = "./config/test.json";
     uint num_threads = thread::hardware_concurrency();
     CLI::App app("Raytracer");
     app.add_option("-f,--file,file", file_name, "Output file name");
@@ -55,7 +55,8 @@ int main(int ac, char *av[])
     auto mtl = parseMaterials(doc);
     auto objs = parseScene(doc, mtl);
     Image img(dim.first, dim.second);
-    cout << "Image resolution: " << dim.first << " x " << dim.second << endl;
+    cout << "Using config: " << input_file << endl;
+    cout << "Render resolution: " << dim.first << " x " << dim.second << endl;
     int i = 0;
     for (const auto &obj : objs) {
         rt.addObject(obj, to_string(i++));

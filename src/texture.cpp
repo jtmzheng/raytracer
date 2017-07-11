@@ -7,12 +7,13 @@
 using namespace std;
 
 glm::vec3 TextureImage::getCol(const glm::vec2 &uv) const {
+    // NB: Origin in uv space is lower left!
     uint i = glm::clamp<uint>(floor(uv.x*img->width()), 0, img->width() - 1);
-    uint j = glm::clamp<uint>(floor(uv.y*img->height()), 0, img->height() - 1);
+    uint j = glm::clamp<uint>(floor((1-uv.y)*img->height()), 0, img->height() - 1);
 
     // Fractional component between pixels
     float up = uv.x*img->width() - floor(uv.x*img->width());
-    float vp = uv.y*img->height() - floor(uv.y*img->height());
+    float vp = (1-uv.y)*img->height() - floor((1-uv.y)*img->height());
     glm::vec3 c00 = glm::vec3((*img)(i, j, 0), (*img)(i, j, 1), (*img)(i, j, 2));
 
     if ((i + 1) >= img->width() || (j + 1) >= img->height()) {

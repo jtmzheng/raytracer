@@ -6,7 +6,7 @@
     }],
     "materials": [{
         "name": "a",
-        "kd": "./earth_flat_map.png",
+        "kd": "./img/earth_flat_map.png",
         "ks": [0.1, 0.1, 0.1],
         "p": 10,
         "mirror": true

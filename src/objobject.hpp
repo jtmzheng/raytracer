@@ -23,7 +23,8 @@ public:
         const std::pair<float, float> &rng) const;
 
     // Load each shape in obj file as a ObjObject
-    static vector<shared_ptr<ObjObject>> loadFromFile(string file, string base, const Transform &transform);
+    static vector<shared_ptr<ObjObject>> loadFromFile(
+        string file, string base, const Transform &transform, const MaterialPtr &def);
 private:
     vector<shared_ptr<Triangle>> triangles;
     AABB box;

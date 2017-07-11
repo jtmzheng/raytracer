@@ -16,6 +16,7 @@ struct HitRecord {
     // A HitRecord should _never_ outlive surface it hits
     const Surface *surf;
     glm::vec3 norm;
+    glm::vec2 uv;
 };
 
 // An Object instance is something a ray can intersect
@@ -40,6 +41,9 @@ public:
     virtual ~Surface() { }
 
     // Get the normal to the surface at a point p on the surface
+    // NB: Very weird... each in coordinate system of derived class
+    // eg) triangle is barycentric, sphere is world
+    // TODO: FIX THIS
     virtual glm::vec3 getNorm(const glm::vec3 &p) const = 0;
     virtual glm::vec2 getUV(const glm::vec3 &p) const = 0;
     const Material& getMaterial() const { return *mat.get(); }
