@@ -2,18 +2,8 @@
 
 Makes use of code from CS488 Fall 2015 starter code
 
-##No soft shadows
+## Sample renders
 
-![](img/first.png)
+![](img/globe_balls.png)
 
-##Soft shadows
-
-![](img/soft_shadows.png)
-
-##OBJ Model
-
-![](img/obj.png)
-
-##Interpolating vertex normals
-
-![](img/interpnorms.png)
+![](img/dwarf1024.png)
