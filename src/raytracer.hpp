@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const static float ASPECT_RATIO = 1.0f;
+const static float DEFAULT_ASPECT_RATIO = 1.0f;
 const static float MAX_DEPTH = 10;
 
 struct JobData;
@@ -40,8 +40,8 @@ public:
         v = glm::cross(w, u);
 
         // Compute the image dimensions
-        impH = glm::tan(glm::radians(fovy/2)) * 2 * focalLength;
-        impW = impH * ASPECT_RATIO;
+        impH = glm::tan(glm::radians(this->fovy/2)) * 2 * focalLength;
+        impW = impH * DEFAULT_ASPECT_RATIO; // Override with render aspect ratio
     }
 
     void render(Image &img);

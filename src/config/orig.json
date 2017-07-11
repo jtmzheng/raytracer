@@ -24,8 +24,8 @@
         "mirror": true
     }],
     "scene": {
-        "width": 1024,
-        "height": 1024,
+        "width": 1920,
+        "height": 1080,
         "camera": {
             "eye": [0, 20, 100],
             "look_at": [0, 0, 0],

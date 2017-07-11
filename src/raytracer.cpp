@@ -24,6 +24,7 @@ struct JobData {
 
 void RayTracer::render(Image &img) {
     // NB: 'c' is centre of image plane, 'l' is lower left hand corner
+    impW = impH * (float(img.width()) / float(img.height()));
     auto c = eye - w*focalLength;
     auto l = c - u*impW/2.0f - v*impH/2.0f;
     auto chunkSize = (img.height() / numThreads) + (img.height() % numThreads != 0);
@@ -154,7 +155,7 @@ void RayTracer::tracePixel(const glm::vec3 &l, Image &img, uint i, uint j) const
 
 glm::vec3 RayTracer::raycolor(const glm::vec3 &eye, const glm::vec3 &dir, int depth) const {
     // Find surface with minimum intersection for ray
-    HitRecord minHr{std::numeric_limits<float>::max(), eye, dir, nullptr, glm::vec3()};
+    HitRecord minHr{std::numeric_limits<float>::max(), eye, dir, nullptr, glm::vec3(), glm::vec2()};
     if (!intersect(eye, dir, minHr)) {
         // TODO: Add background if no intersection found
         return glm::vec3();
